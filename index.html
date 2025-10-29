@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Expense Tracker</title>
+    <link rel="stylesheet" href="expense.css">
+</head>
+
+<body>
+    <div class="page-container">
+        <div class="contentBox">
+            <div class="navBar">
+                <div class="navLeft">
+                    <h3>MyWallet Dashboard</h3>
+                    <p>Good Morning, Himanshu 👋</p>
+                </div>
+                <div class="navRight">
+                    <div class="icon1 navIcons">
+                        <button><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="white" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" aria-hidden="true">
+                                <circle cx="12" cy="12" r="4"></circle>
+                                <path d="M12 2v2"></path>
+                                <path d="M12 20v2"></path>
+                                <path d="m4.93 4.93 1.41 1.41"></path>
+                                <path d="m17.66 17.66 1.41 1.41"></path>
+                                <path d="M2 12h2"></path>
+                                <path d="M20 12h2"></path>
+                                <path d="m6.34 17.66-1.41 1.41"></path>
+                                <path d="m19.07 4.93-1.41 1.41"></path>
+                            </svg></button>
+                    </div>
+                    <div class="icon2 navIcons">
+                        <button>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="white" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" aria-hidden="true">
+                                <path
+                                    d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401">
+                                </path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="icon3 navIcons">
+                        <button>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="white" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" aria-hidden="true">
+                                <path
+                                    d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z">
+                                </path>
+                                <circle cx="13.5" cy="6.5" r=".5" fill="white"></circle>
+                                <circle cx="17.5" cy="10.5" r=".5" fill="white"></circle>
+                                <circle cx="6.5" cy="12.5" r=".5" fill="white"></circle>
+                                <circle cx="8.5" cy="7.5" r=".5" fill="white"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section2">
+                <div class="personalCard">
+                    <div class="header">
+                        <div class="header-left">
+                            <div class="walletLogo">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="white" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" aria-hidden="true">
+                                    <path
+                                        d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1">
+                                    </path>
+                                    <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"></path>
+                                </svg>
+
+                            </div>
+                            <div class="balance">
+                                <p>Available balance</p>
+
+                                <h2>₹50,000.00</h2>
+                            </div>
+                        </div>
+                        <div class="header-right">
+                            <button class="editBalance"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                    viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path
+                                        d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z">
+                                    </path>
+                                </svg></button>
+                        </div>
+                    </div>
+                    <div class="cardContent">
+                        <div class="bankName">
+                            <p>Bank Name</p>
+                            <h2>My SBI Account</h2>
+                        </div>
+                        <div class="accountType">
+                            <p>Account Type</p>
+                            <h2>Savings</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="transactionAdder">
+                    <header>
+                        Add New Transaction
+                    </header>
+                    <content>
+                        <div class="part1">
+                            <div class="name">
+                                <label for="transactionName">Transaction Name</label>
+                                <input type="text" id="transactionName" placeholder="e.g., Grocery Shopping">
+                            </div>
+                            <div class="amount">
+                                <label for="amount">Amount (₹)</label>
+                                <input type="text" id="amount" placeholder="0.00">
+                            </div>
+                        </div>
+                        <div class="part2">
+                            <div class="sender">
+                                <label for="sender">Recipient/Sender (Optional)</label>
+                                <input type="text" id="sender" placeholder="e.g., Thakur Naayi">
+                            </div>
+                        </div>
+                        <div class="part3">
+                            <div class="type">
+                                <label for="type">Type</label>
+                                <select name="type" id="type">
+                                    <option value="expense" selected>Expense</option>
+                                    <option value="income">Income</option>
+                                </select>
+                            </div>
+                            <div class="category">
+                                <label for="category">Category</label>
+                                <select name="category" id="category">
+                                    <option value="food" selected>Food</option>
+                                    <option value="travel">Travel</option>
+                                    <option value="shopping">Shopping</option>
+                                    <option value="bills">Bills</option>
+                                    <option value="others">Others</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="part4">
+                            <div class="description">
+                                <label for="description">Description (Optional)</label>
+                                <textarea name="description" id="description"
+                                    placeholder="Add notes or details about this transaction..."></textarea>
+                            </div>
+                        </div>
+                        <div class="part5">
+                            <div class="online">
+                                <label>
+                                    <input type="checkbox" id="online">
+                                    Online (UPI)
+                                </label>
+                            </div>
+                        </div>
+                        <div class="part6">
+                            <button>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M5 12h14"></path>
+                                    <path d="M12 5v14"></path>
+                                </svg>
+                                <p>Add Transaction</p>
+                            </button>
+                        </div>
+                    </content>
+                </div>
+
+            </div>
+
+            <div class="section3">
+                <ul>
+                    <li>
+                        <div class="cardLeft">
+                            <p>Total Received</p>
+                            <h3>₹75,000.00</h3>
+                        </div>
+                        <div class="cardRight">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round"
+                                class="lucide lucide-trending-up h-6 w-6 text-green-600 dark:text-green-400"
+                                aria-hidden="true">
+                                <path d="M16 7h6v6"></path>
+                                <path d="m22 7-8.5 8.5-5-5L2 17"></path>
+                            </svg>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="cardLeft">
+                            <p>Total Spent</p>
+                            <h3>₹19,000.00</h3>
+                        </div>
+                        <div class="cardRight">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round"
+                                class="lucide lucide-trending-down h-6 w-6 text-red-600 dark:text-red-400"
+                                aria-hidden="true">
+                                <path d="M16 17h6v-6"></path>
+                                <path d="m22 17-8.5-8.5-5 5L2 7"></path>
+                            </svg>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="cardLeft">
+                            <p>Current Balance</p>
+                            <h3>₹50,000.00</h3>
+                        </div>
+                        <div class="cardRight">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round"
+                                class="lucide lucide-wallet h-6 w-6 text-blue-600 dark:text-blue-400"
+                                aria-hidden="true">
+                                <path
+                                    d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1">
+                                </path>
+                                <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"></path>
+                            </svg>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="calculator">
+                <header>
+                    <div class="header-left">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="lucide lucide-calculator h-5 w-5 text-indigo-600 dark:text-indigo-400"
+                            aria-hidden="true">
+                            <rect width="16" height="20" x="4" y="2" rx="2"></rect>
+                            <line x1="8" x2="16" y1="6" y2="6"></line>
+                            <line x1="16" x2="16" y1="14" y2="18"></line>
+                            <path d="M16 10h.01"></path>
+                            <path d="M12 10h.01"></path>
+                            <path d="M8 10h.01"></path>
+                            <path d="M12 14h.01"></path>
+                            <path d="M8 14h.01"></path>
+                            <path d="M12 18h.01"></path>
+                            <path d="M8 18h.01"></path>
+                        </svg>
+
+                        <h3>Personal Calculator</h3>
+                    </div>
+                    <div class="header-right">
+                        <button>Clear All</button>
+                    </div>
+
+                </header>
+                <div class="spendCardList">
+                    <!-- <template> -->
+                    <div class="spendCard">
+                        <div class="cardLeft">
+                            <p>Electricity Bill</p>
+                            <p>27/10/2025</p>
+                        </div>
+                        <div class="cardRight">
+                            <span>
+                                -₹2800.00
+                            </span>
+                            <button>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                    </template>
+                </div>
+                <div class="infoBox">
+                    <div class="totalIncome">
+                        <div class="key">Total Income:</div>
+                        <div class="value">+₹0.00</div>
+                    </div>
+                    <div class="totalExpense">
+                        <div class="key">Total Expense:</div>
+                        <div class="value">-₹4200.00</div>
+                    </div>
+                    <div class="netAmount subtracted">
+                        <div class="key">Net Amount:</div>
+                        <div class="value ">₹-4200.00</div>
+                    </div>
+                    <div class="totalTransactions">
+                       <div class="key">Selected Transactions:</div>
+                       <div class="value">1</div>    
+                    </div>
+                </div>
+
+            </div>
+
+
+
+
+        </div>
+    </div>
+
+    <script src="expense.js"></script>
+</body>
+
+</html>
