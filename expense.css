@@ -657,6 +657,8 @@ content .part6 button p {
     box-shadow: 0 10px 15px -3px #0000001a, 0 4px 6px -4px #0000001a;
     background-image: linear-gradient(to bottom right in oklab, #eef2ff, #faf5ff);
     border: 1px solid #c6d2ff;
+    margin-bottom: 40px;
+    border-radius: 14px;
 }
 
 .contentBox .calculator header {
@@ -686,7 +688,7 @@ content .part6 button p {
     font-size: 16px;
 }
 
-.contentBox .calculator header .header-right button{
+.contentBox .calculator header .header-right button {
     height: 32px;
     padding: 12px;
     border: none;
@@ -698,18 +700,19 @@ content .part6 button p {
     transition: all 0.3s ease-in-out;
 }
 
-.contentBox .calculator header .header-right button:hover{
+.contentBox .calculator header .header-right button:hover {
     background-color: rgba(255, 209, 192, 0.75);
 }
 
-.contentBox .spendCardList{
+.contentBox .spendCardList {
     display: flex;
     align-items: center;
     overflow-y: auto;
     max-height: 200px;
     margin-bottom: 16px;
 }
-.contentBox .spendCardList .spendCard{
+
+.contentBox .spendCardList .spendCard {
     padding: 8px;
     height: 52px;
     display: flex;
@@ -719,32 +722,37 @@ content .part6 button p {
     border-radius: 10px;
     justify-content: space-between;
 }
-.contentBox .spendCardList .spendCard .cardLeft{
+
+.contentBox .spendCardList .spendCard .cardLeft {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
 }
 
-.contentBox .spendCardList .spendCard .cardLeft p:first-child{
+.contentBox .spendCardList .spendCard .cardLeft p:first-child {
     height: 20px;
     font-size: 14px;
 }
-.contentBox .spendCardList .spendCard .cardLeft p:last-child{
+
+.contentBox .spendCardList .spendCard .cardLeft p:last-child {
     height: 16px;
     font-size: 12px;
 }
-.contentBox .spendCardList .spendCard .cardRight{
+
+.contentBox .spendCardList .spendCard .cardRight {
     display: flex;
     align-items: center;
     justify-content: flex-start;
     gap: 5px;
     height: 21px;
 }
-.contentBox .spendCardList .spendCard .cardRight span{
+
+.contentBox .spendCardList .spendCard .cardRight span {
     font-size: 14px;
     color: #e7000b;
 }
-.contentBox .spendCardList .spendCard .cardRight button{
+
+.contentBox .spendCardList .spendCard .cardRight button {
     border: none;
     border-radius: 7px;
     padding: 3px;
@@ -753,11 +761,11 @@ content .part6 button p {
 
 }
 
-.contentBox .spendCardList .spendCard .cardRight button:hover{
+.contentBox .spendCardList .spendCard .cardRight button:hover {
     background-color: rgb(228, 228, 228);
 }
 
-.contentBox .spendCardList .spendCard .cardRight button svg{
+.contentBox .spendCardList .spendCard .cardRight button svg {
     height: 16px;
     width: 16px;
     display: flex;
@@ -766,7 +774,7 @@ content .part6 button p {
     stroke: black;
 }
 
-.calculator .infoBox{
+.calculator .infoBox {
     padding-top: 16px;
     border-top: 1px solid #c6d2ff;
     display: flex;
@@ -774,85 +782,484 @@ content .part6 button p {
     justify-content: center;
 }
 
-.infoBox .totalIncome, .totalExpense, .netAmount, .totalTransactions{
+.infoBox .totalIncome,
+.totalExpense,
+.netAmount,
+.totalTransactions {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
 /* Total Income */
-.infoBox .totalIncome{
+.infoBox .totalIncome {
     margin-bottom: 8px;
     height: 24px;
 }
 
-.infoBox .totalIncome .key{
+.infoBox .totalIncome .key {
     font-size: 14px;
     height: 20px;
     color: #4a5565;
 }
 
-.infoBox .totalIncome .value{
+.infoBox .totalIncome .value {
     font-size: 16px;
     color: #00a63e;
 }
 
 /* Total Expense */
-.infoBox .totalExpense{
+.infoBox .totalExpense {
     margin-bottom: 8px;
     height: 24px;
 }
 
-.infoBox .totalExpense .key{
+.infoBox .totalExpense .key {
     font-size: 14px;
     height: 20px;
     color: #4a5565;
 }
 
-.infoBox .totalExpense .value{
+.infoBox .totalExpense .value {
     font-size: 16px;
     color: #e7000b;
 }
 
 /* Net Amount */
-.infoBox .netAmount{
+.infoBox .netAmount {
     margin-bottom: 8px;
     padding-top: 8px;
     height: 32px;
     border-top: 1px solid #c6d2ff;
 }
 
-.infoBox .netAmount .key{
+.infoBox .netAmount .key {
     font-size: 16px;
     height: 24px;
     color: #1e2939;
 }
 
-.infoBox .netAmount.subtracted .value{
+.infoBox .netAmount.subtracted .value {
     font-size: 16px;
     color: #e7000b;
 }
-.infoBox .netAmount.added .value{
+
+.infoBox .netAmount.added .value {
     font-size: 16px;
     color: #00a63e;
 }
 
 /* Total Expenses */
-.infoBox .totalTransactions{
+.infoBox .totalTransactions {
     margin-bottom: 8px;
     height: 24px;
 }
 
-.infoBox .totalTransactions .key{
+.infoBox .totalTransactions .key {
     font-size: 14px;
     height: 20px;
     color: #6a7282;
 }
 
-.infoBox .totalTransactions .value{
+.infoBox .totalTransactions .value {
     font-size: 12px;
     background-color: transparent;
     border: 0.3px solid black;
     border-radius: 4px;
     padding: 1px 3px;
+}
+
+.recentTransactions header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 24px;
+    margin-bottom: 24px;
+}
+
+.recentTransactions header h2 {
+    color: #1e2939;
+    font-size: 16px;
+    font-weight: 400;
+}
+
+.recentTransactions header p {
+    color: #6a7282;
+    font-size: 14px;
+    height: 20px;
+}
+
+.recentTransactions .filterTab {
+    margin-bottom: 24px;
+}
+
+.recentTransactions .filterTab .searchBar {
+    display: flex;
+    align-items: center;
+    justify-content: left;
+    height: 36px;
+    position: relative;
+    margin-bottom: 16px;
+    width: 100%;
+}
+
+.recentTransactions .filterTab .searchBar input {
+    border: none;
+    background-color: #f3f3f5;
+    font-size: 14px;
+    line-height: 1.4;
+    padding: 4px 12px 4px 40px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition: all 0.2s ease-in-out;
+    width: 100%;
+    height: 100%;
+    max-width: 448px;
+}
+
+.recentTransactions .filterTab .searchBar input:focus {
+    outline: 4px solid rgb(219, 219, 219);
+}
+
+.recentTransactions .filterTab .searchBar input::placeholder {
+    color: rgba(0, 0, 0, 0.462);
+}
+
+.recentTransactions .filterTab .searchBar svg {
+    position: absolute;
+    left: 12px;
+    top: 9.5px;
+    stroke: #99a1af;
+}
+
+.recentTransactions .filterTab .filterOptions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    height: 36px;
+}
+
+.recentTransactions .filterTab .filterOptions .filterLabel {
+    display: flex;
+    align-items: center;
+    height: 20px;
+    gap: 6px;
+}
+
+.recentTransactions .filterTab .filterOptions .filterLabel svg {
+    stroke: #4a5565;
+    vertical-align: middle;
+}
+
+.recentTransactions .filterTab .filterOptions .filterLabel p {
+    font-size: 14px;
+    color: #4a5565;
+    line-height: 1.4;
+}
+
+.recentTransactions .filterTab .filterOptions ul {
+    list-style-type: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 100%;
+}
+
+.recentTransactions .filterTab .filterOptions ul li {
+    display: flex;
+    padding: 0 12px;
+    font-size: 14px;
+    height: 100%;
+    align-items: center;
+    border: 1px solid #0000001a;
+    background-color: #fff;
+    color: #0a0a0a;
+    border-radius: 8px;
+    line-height: 1.4;
+    font-weight: 500;
+    transition: all 0.3s ease-in-out;
+    cursor: default;
+}
+
+.recentTransactions .filterTab .filterOptions ul li:hover {
+    transform: scale(1.06);
+    background-color: rgb(237, 237, 237);
+}
+
+.recentTransactions .filterTab .filterOptions ul li.selected {
+    filter: invert(1);
+}
+
+.recentTransactions .filterTab .filterOptions .category {
+    display: flex;
+    align-items: center;
+    height: 20px;
+    gap: 6px;
+}
+
+.recentTransactions .filterTab .filterOptions .category p {
+    font-size: 14px;
+    color: #4a5565;
+    line-height: 1.4;
+}
+
+.recentTransactions .filterTab .filterOptions .category .categorySelect {
+    height: 36px;
+    width: 140px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: #f3f3f5;
+    border: 1px solid transparent;
+    border-radius: 8px;
+}
+
+.recentTransactions .filterTab .filterOptions .category .categorySelect p {
+    font-size: 14px;
+    line-height: 1.4;
+    color: #0a0a0a;
+}
+
+.recentTransactions .filterTab .filterOptions .category .categorySelect svg {
+    color: #717182;
+}
+
+.transactionList .cardInfo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.transactionList {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    margin-bottom: 16px;
+    background-color: #fff;
+    border-radius: 14px;
+    cursor: pointer;
+    border: 1px solid #0000001a;
+    transition: all 0.3s ease-in-out;
+}
+
+.transactionList:hover{
+    transform: scale(1.015);
+    box-shadow: 0 10px 10px -8px rgba(0, 0, 0, 0.236);
+}
+
+.transactionList .checkbox1 {
+    height: 16px;
+    width: 16px;
+    border: 1px solid #0000001a;
+    box-shadow: 0 1px 2px 0 #0000000d;
+    background-color: #f3f3f5;
+    border-radius: 4px;
+    transition: all 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.transactionList .checkbox1 svg {
+    opacity: 0;
+    stroke: #fff;
+}
+
+.transactionList .checkbox1.checked {
+    background-color: #030213;
+    border-color: #030213;
+}
+
+.transactionList .checkbox1.checked svg {
+    opacity: 1;
+}
+
+.transactionList .checkbox2 {
+    height: 16px;
+    width: 16px;
+    border: 1px solid #615fff;
+    box-shadow: 0 1px 2px 0 #0000000d;
+    background-color: #f3f3f5;
+    border-radius: 4px;
+    transition: all 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.transactionList .checkbox2 svg {
+    opacity: 0;
+    stroke: #fff;
+}
+
+.transactionList .checkbox2.checked {
+    background-color: #615fff;
+    border-color: #030213;
+}
+
+.transactionList .checkbox2.checked svg {
+    opacity: 1;
+}
+
+.transactionList .cardInfo .cardLeft main {
+    font-size: 16px;
+    height: 24px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.transactionList .cardInfo .cardLeft main.cash svg:first-child {
+    display: block;
+    stroke: #6a7282;
+}
+
+.transactionList .cardInfo .cardLeft main svg:nth-child(2) {
+    display: none;
+}
+
+.transactionList .cardInfo .cardLeft main svg:nth-child(3) {
+    display: none;
+}
+
+.transactionList .cardInfo .cardLeft main.upi svg:nth-child(2) {
+    display: block;
+    stroke: #2b7fff;
+}
+
+.transactionList .cardInfo .cardLeft main.haveDescription svg:nth-child(3) {
+    display: block;
+    stroke: #9810fa;
+}
+
+.transactionList .cardInfo .cardLeft ul {
+    list-style-type: none;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.transactionList .cardInfo .cardLeft ul li:nth-child(1) {
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.3;
+    border-radius: 8px;
+    border: 1px solid;
+}
+
+.transactionList .cardInfo .cardLeft ul.food li:nth-child(1) {
+    color: #008236;
+    background-color: #00c9511a;
+    border-color: #00c95133;
+}
+
+.transactionList .cardInfo .cardLeft ul.travel li:nth-child(1) {
+    color: #ca3500;
+    background-color: #ff69001a;
+    border-color: #ff690033;
+}
+
+.transactionList .cardInfo .cardLeft ul.shopping li:nth-child(1) {
+    color: #8200db;
+    background-color: #ad46ff1a;
+    border-color: #ad46ff33;
+}
+
+.transactionList .cardInfo .cardLeft ul.bills li:nth-child(1) {
+    color: #1447e6;
+    background-color: #2b7fff1a;
+    border-color: #2b7fff33;
+}
+
+.transactionList .cardInfo .cardLeft ul.other li:nth-child(1) {
+    color: #364153;
+    background-color: #6a72821a;
+    border-color: #6a728233;
+}
+
+.transactionList .cardInfo .cardLeft ul li:nth-child(2) {
+    color: #6a7282;
+    font-size: 12px;
+    height: 20px;
+}
+
+.transactionList .cardInfo .cardLeft ul.ifRecipient li:nth-child(3) {
+    color: #6a7282;
+    font-size: 12px;
+    height: 16px;
+}
+
+.transactionList .cardInfo .cardRight {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.transactionList .cardInfo .cardRight .transaction {
+    font-size: 14px;
+    height: 24px;
+    line-height: 1.4;
+}
+.transactionList .cardInfo .cardRight .transaction.expense {
+    font-size: 14px;
+    height: 24px;
+    color: #e7000b;
+}
+.transactionList .cardInfo .cardRight .transaction.income {
+    font-size: 14px;
+    height: 24px;
+    color: #00a63e;
+}
+
+.transactionList .cardInfo .cardRight #edit {
+    border: none;
+    height: 32px;
+    width: 32px;
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease-in-out;
+    border-radius: 8px;
+}
+
+.transactionList .cardInfo .cardRight #edit:hover {
+    transform: scale(1.08);
+    background-color: #dbeafe;
+}
+
+.transactionList .cardInfo .cardRight #edit svg {
+    stroke: #155dfc;
+}
+
+.transactionList .cardInfo .cardRight #delete {
+    border: none;
+    height: 32px;
+    width: 32px;
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease-in-out;
+    border-radius: 8px;
+}
+
+.transactionList .cardInfo .cardRight #delete:hover {
+    transform: scale(1.08);
+    background-color: #ffe2e2;
+    
+}
+
+.transactionList .cardInfo .cardRight #delete svg {
+    stroke: #e7000b;
+}
+
+/* Styling Transaction Detail Banner */
+.transactionDetails{
+    pos
 }
