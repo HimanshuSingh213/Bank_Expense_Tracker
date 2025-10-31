@@ -14,7 +14,7 @@
             <div class="navBar">
                 <div class="navLeft">
                     <h3>MyWallet Dashboard</h3>
-                    <p>Good Morning, Himanshu 👋</p>
+                    <p class="greeting">Good Morning, Himanshu 👋</p>
                 </div>
                 <div class="navRight">
                     <div class="icon1 navIcons">
@@ -111,11 +111,11 @@
                         <div class="part1">
                             <div class="name">
                                 <label for="transactionName">Transaction Name</label>
-                                <input type="text" id="transactionName" placeholder="e.g., Grocery Shopping">
+                                <input type="text" id="transactionName" placeholder="e.g., Grocery Shopping" required>
                             </div>
                             <div class="amount">
                                 <label for="amount">Amount (₹)</label>
-                                <input type="text" id="amount" placeholder="0.00">
+                                <input type="text" id="amount" placeholder="0.00" type="number" required>
                             </div>
                         </div>
                         <div class="part2">
@@ -229,7 +229,7 @@
                 </ul>
             </div>
 
-            <div class="calculator">
+            <div class="calculator" style="display: none;">
                 <header>
                     <div class="header-left">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -257,25 +257,25 @@
                 </header>
                 <div class="spendCardList">
                     <template id="spendCard">
-                    <div class="spendCard">
-                        <div class="cardLeft">
-                            <p>Electricity Bill</p>
-                            <p>27/10/2025</p>
+                        <div class="spendCard">
+                            <div class="cardLeft">
+                                <p>Electricity Bill</p>
+                                <p>27/10/2025</p>
+                            </div>
+                            <div class="cardRight">
+                                <span>
+                                    -₹2800.00
+                                </span>
+                                <button>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                        aria-hidden="true">
+                                        <path d="M18 6 6 18"></path>
+                                        <path d="m6 6 12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
-                        <div class="cardRight">
-                            <span>
-                                -₹2800.00
-                            </span>
-                            <button>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                    fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                    aria-hidden="true">
-                                    <path d="M18 6 6 18"></path>
-                                    <path d="m6 6 12 12"></path>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
                     </template>
                 </div>
                 <div class="infoBox">
@@ -285,11 +285,11 @@
                     </div>
                     <div class="totalExpense">
                         <div class="key">Total Expense:</div>
-                        <div class="value">-₹4200.00</div>
+                        <div class="value">₹0</div>
                     </div>
                     <div class="netAmount subtracted">
                         <div class="key">Net Amount:</div>
-                        <div class="value ">₹-4200.00</div>
+                        <div class="value ">₹0</div>
                     </div>
                     <div class="totalTransactions">
                         <div class="key">Selected Transactions:</div>
@@ -301,7 +301,7 @@
             <div class="recentTransactions">
                 <header>
                     <h2>Recent Transactions</h2>
-                    <p>5 transactions</p>
+                    <p>0 transactions</p>
                 </header>
                 <div class="filterTab">
                     <div class="searchBar">
@@ -347,41 +347,88 @@
 
                     </div>
                 </div>
+                <div class="recentTransactionList">
 
-                <template id="transactionList">
-                    <div class="transactionList">
-                        <button class="checkbox1">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <path d="M20 6 9 17l-5-5"></path>
-                            </svg>
-                        </button>
-                        <button class="checkbox2">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <path d="M20 6 9 17l-5-5"></path>
-                            </svg>
-                        </button>
-                        <div class="cardInfo">
-                            <div class="cardLeft">
-                                <main class="cash">
-                                    chole bhature at college
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
-                                        fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                        aria-hidden="true">
-                                        <rect width="20" height="12" x="2" y="6" rx="2"></rect>
-                                        <circle cx="12" cy="12" r="2"></circle>
-                                        <path d="M6 12h.01M18 12h.01"></path>
-                                    </svg>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
-                                        fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                        aria-hidden="true">
-                                        <rect width="20" height="14" x="2" y="5" rx="2"></rect>
-                                        <line x1="2" x2="22" y1="10" y2="10"></line>
-                                    </svg>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                    <template id="transactionList">
+                        <div class="transactionList">
+                            <button class="checkbox1">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M20 6 9 17l-5-5"></path>
+                                </svg>
+                            </button>
+                            <button class="checkbox2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M20 6 9 17l-5-5"></path>
+                                </svg>
+                            </button>
+                            <div class="cardInfo">
+                                <div class="cardLeft">
+                                    <main class="">
+                                        <p class="cardTitle"></p>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
+                                            viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round" aria-hidden="true">
+                                            <rect width="20" height="12" x="2" y="6" rx="2"></rect>
+                                            <circle cx="12" cy="12" r="2"></circle>
+                                            <path d="M6 12h.01M18 12h.01"></path>
+                                        </svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
+                                            viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round" aria-hidden="true">
+                                            <rect width="20" height="14" x="2" y="5" rx="2"></rect>
+                                            <line x1="2" x2="22" y1="10" y2="10"></line>
+                                        </svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
+                                            viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
+                                            <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
+                                            <path d="M10 9H8"></path>
+                                            <path d="M16 13H8"></path>
+                                            <path d="M16 17H8"></path>
+                                        </svg>
+                                    </main>
+                                    <ul class="">
+                                        <li></li>
+                                        <li></li>
+                                        <li></li>
+                                    </ul>
+                                </div>
+                                <div class="cardRight">
+                                    <div class="transaction">₹0</div>
+                                    <button id="edit">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path
+                                                d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z">
+                                            </path>
+                                        </svg>
+                                    </button>
+                                    <button id="delete">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M10 11v6"></path>
+                                            <path d="M14 11v6"></path>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                                            <path d="M3 6h18"></path>
+                                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="transactionDetailOverlay">
+
+                            <div class="transactionDetails">
+                                <header>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                                         fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                                         aria-hidden="true">
                                         <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
@@ -390,77 +437,123 @@
                                         <path d="M16 13H8"></path>
                                         <path d="M16 17H8"></path>
                                     </svg>
-                                </main>
-                                <ul class="food ifRecipient">
-                                    <li>Food</li>
-                                    <li>30 Oct 2025</li>
-                                    <li>• IndiGo Airlines</li>
-                                </ul>
-                            </div>
-                            <div class="cardRight">
-                                <div class="transaction expense">-₹8,500.00</div>
-                                <button id="edit">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round" aria-hidden="true">
-                                        <path
-                                            d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z">
-                                        </path>
-                                    </svg>
-                                </button>
-                                <button id="delete">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round" aria-hidden="true">
-                                        <path d="M10 11v6"></path>
-                                        <path d="M14 11v6"></path>
-                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
-                                        <path d="M3 6h18"></path>
-                                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                                    <h3>Transaction Details</h3>
+                                </header>
+                                <header2>Complete information about this transaction</header2>
+                                <div class="detailCard">
+                                    <div class="line1">
+                                        <div class="left">
+                                            <div class="recipient">bhadve dost ko bheekh</div>
+                                            <div class="transaction">
 
-                    <div class="transactionDetailOverlay">
-
-                        <div class="transactionDetails">
-                            <header>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                    fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                    aria-hidden="true">
-                                    <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
-                                    <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
-                                    <path d="M10 9H8"></path>
-                                    <path d="M16 13H8"></path>
-                                    <path d="M16 17H8"></path>
-                                </svg>
-                                <h3>Transaction Details</h3>
-                            </header>
-                            <header2>Complete information about this transaction</header2>
-                            <div class="detailCard">
-                                <div class="line1">
-                                    <div class="recipient">bhadva dost</div>
-                                    <div class="category">Other</div>
-                                </div>
-                                <div class="line2 transaction">
-                                    +₹50.00
-                                </div>
-                                <div class="line3">
-                                    <div class="date">
-                                        <p>Date</p>
-                                        <h4>30 Oct 2025</h4>
+                                            </div>
+                                        </div>
+                                        <div class="right">
+                                            <div class="category other">Other</div>
+                                        </div>
                                     </div>
-                                    <div class="type">
-                                        <p>Type</p>
-                                        <h4>Income</h4>
+                                    <div class="line2">
+                                        <div class="date">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                <path d="M8 2v4"></path>
+                                                <path d="M16 2v4"></path>
+                                                <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+                                                <path d="M3 10h18"></path>
+                                            </svg>
+                                            <div class="dateText">
+                                                <p>Date</p>
+                                                <h4>30 Oct 2025</h4>
+                                            </div>
+                                        </div>
+                                        <div class="type">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                <path
+                                                    d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z">
+                                                </path>
+                                                <circle cx="7.5" cy="7.5" r=".5" fill="currentColor"></circle>
+                                            </svg>
+                                            <div class="typeText">
+                                                <p>Type</p>
+                                                <h4>Income</h4>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
+
+                                <div class="paymentMethod">
+                                    <header>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <rect width="20" height="14" x="2" y="5" rx="2"></rect>
+                                            <line x1="2" x2="22" y1="10" y2="10"></line>
+                                        </svg>
+                                        <label>Payment Method</label>
+                                    </header>
+                                    <p class="upi">Online Payment (UPI)</p>
+                                    <p class="cash" hidden>Cash Payment</p>
+                                </div>
+                                <div class="recipient-sender">
+                                    <header>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="12" cy="7" r="4"></circle>
+                                        </svg>
+                                        <label>Recipient</label>
+                                    </header>
+                                    <p class="upi">Nikhil Bkl (Terrorist)</p>
+                                </div>
+                                <div class="reviewStatus">
+                                    <header>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <path d="m9 12 2 2 4-4"></path>
+                                        </svg>
+                                        <label>Review Status</label>
+                                    </header>
+                                    <p class="Pending">Pending Review</p>
+                                    <p class="reviewed" hidden>Reviewed</p>
+                                </div>
+
+                                <div class="description">
+                                    <header>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
+                                            <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
+                                            <path d="M10 9H8"></path>
+                                            <path d="M16 13H8"></path>
+                                            <path d="M16 17H8"></path>
+                                        </svg>
+                                        <p>Description</p>
+                                    </header>
+                                    <div class="descriptionBox">
+                                        nikhil bhadve ko bheekh ke 50 rupay diye the jo usne waapis kar diye.
+                                    </div>
+                                </div>
+
+                                <button class="minimizer">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M18 6 6 18"></path>
+                                        <path d="m6 6 12 12"></path>
+                                    </svg>
+                                </button>
+
                             </div>
                         </div>
-                    </div>
-                </template>
+                    </template>
+                </div>
             </div>
 
 
