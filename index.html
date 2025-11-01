@@ -78,18 +78,27 @@
                             </div>
                             <div class="balance">
                                 <p>Available balance</p>
-
-                                <h2>₹50,000.00</h2>
+                                <h2>₹0</h2>
+                                <input type="text" id="balance" type="number">
                             </div>
                         </div>
                         <div class="header-right">
-                            <button class="editBalance"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                            <button class="editBalance" ><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                                     viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"
                                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                     <path
                                         d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z">
                                     </path>
-                                </svg></button>
+                                </svg>
+                            </button>
+                            <div class="editBtns">
+                                <button class="editYes">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+                                </button>
+                                <button class="editNo">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div class="cardContent">
@@ -128,18 +137,18 @@
                             <div class="type">
                                 <label for="type">Type</label>
                                 <select name="type" id="type">
-                                    <option value="expense" selected>Expense</option>
-                                    <option value="income">Income</option>
+                                    <option value="Expense" selected>Expense</option>
+                                    <option value="Income">Income</option>
                                 </select>
                             </div>
                             <div class="category">
                                 <label for="category">Category</label>
                                 <select name="category" id="category">
-                                    <option value="food" selected>Food</option>
-                                    <option value="travel">Travel</option>
-                                    <option value="shopping">Shopping</option>
-                                    <option value="bills">Bills</option>
-                                    <option value="others">Others</option>
+                                    <option value="Food" selected>Food</option>
+                                    <option value="Travel">Travel</option>
+                                    <option value="Shopping">Shopping</option>
+                                    <option value="Bills">Bills</option>
+                                    <option value="Others">Others</option>
                                 </select>
                             </div>
                         </div>
@@ -178,8 +187,8 @@
                 <ul>
                     <li>
                         <div class="cardLeft">
-                            <p>Total Received</p>
-                            <h3>₹75,000.00</h3>
+                            <p>Total Received (last 30days)</p>
+                            <h3>₹0</h3>
                         </div>
                         <div class="cardRight">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
@@ -194,8 +203,8 @@
                     </li>
                     <li>
                         <div class="cardLeft">
-                            <p>Total Spent</p>
-                            <h3>₹19,000.00</h3>
+                            <p>Total Spent (last 30days)</p>
+                            <h3>₹0</h3>
                         </div>
                         <div class="cardRight">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
@@ -211,7 +220,7 @@
                     <li>
                         <div class="cardLeft">
                             <p>Current Balance</p>
-                            <h3>₹50,000.00</h3>
+                            <h3>₹0</h3>
                         </div>
                         <div class="cardRight">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
@@ -264,7 +273,7 @@
                             </div>
                             <div class="cardRight">
                                 <span>
-                                    -₹2800.00
+                                    ₹0
                                 </span>
                                 <button>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
