@@ -57,13 +57,16 @@ function addNewTransaction() {
         cardAmount.classList.remove("income");
         cardAmount.textContent = "-₹" + formatIndianNumber(transactionAmountValue);
         currentBalance -= Math.floor(parseFloat(transactionAmountValue) * 100) / 100;
+        localStorage.setItem("currentBalance", currentBalance);
     }
     else {
         cardAmount.classList.add("income");
         cardAmount.classList.remove("expense");
         cardAmount.textContent = "+₹" + formatIndianNumber(transactionAmountValue);
         currentBalance += Math.floor(parseFloat(transactionAmountValue) * 100) / 100;
+        localStorage.setItem("currentBalance", currentBalance);
     }
+
 
     updateBalanceDisplay();
 
@@ -189,6 +192,8 @@ recentTransactionList.addEventListener("click", (e) => {
                 currentBalance -= amount;
             }
 
+            localStorage.setItem("currentBalance", currentBalance);
+
             allTransactions = allTransactions.filter(transaction => {
                 return !(
                     transaction.name === transactionTitle &&
@@ -231,6 +236,11 @@ navIcons[1].addEventListener("click", () => {
 });
 
 function formatIndianNumber(num) {
+    if (typeof num !== 'number') {
+        num = parseFloat(num);  // Convert to number if it's a string
+    }
+    if (isNaN(num)) return '0';
+
     const numTruncated = Math.floor(parseFloat(num) * 100) / 100;
     const numFixed = numTruncated.toFixed(2);
 
@@ -265,7 +275,10 @@ editYesBtn.addEventListener("click", () => {
     editOptions.style.display = "none";
     balanceEditInput.style.display = "";
 
-    balanceValue = parseFloat(balanceEditInput.value) || 0;
+    currentBalance = parseFloat(balanceEditInput.value) || 0;
+
+    localStorage.setItem("currentBalance", currentBalance);
+
     updateBalanceDisplay();
     currentBalanceDisplay.textContent = availableValue.textContent;
     setTimeout(() => {
@@ -303,12 +316,21 @@ recentTransactionList.addEventListener("click", (e) => {
         reviewCheckBox.classList.toggle('checked');
         transactionCard.classList.toggle("reviewed");
 
+        const transactionName = cardTitle.textContent;
+        const cardAmount = transactionCard.querySelector(".transaction").textContent;
+        const cardDate = transactionCard.querySelector(".cardInfo .cardLeft ul li:nth-child(2)").textContent;
+        const storageKey = `checked_${transactionName}_${cardAmount}_${cardDate}`;
+
         if (reviewCheckBox.classList.contains('checked')) {
             cardTitle.style.opacity = "0.4";
             cardTitle.style.textDecoration = "line-through";
+            transactionCard.style.backgroundColor = "#f2f2f2c4";
+            localStorage.setItem(storageKey, JSON.stringify(true));
         } else {
             cardTitle.style.opacity = "1";
             cardTitle.style.textDecoration = "none";
+            transactionCard.style.backgroundColor = "";
+            localStorage.setItem(storageKey, JSON.stringify(false));
         }
     }
 });
@@ -402,7 +424,7 @@ function addTransactionToCalculator(transactionCard) {
 
 function removeTransactionFromCalculator() {
     const spendCardList = document.querySelector(".spendCardList");
-    const lastCard = spendCardList.querySelector(".spendCard:last-child");
+    const lastCard = spendCardList.querySelector(".spendCard");
     if (lastCard) {
         lastCard.remove();
     }
@@ -426,6 +448,7 @@ function renderTransaction(transaction) {
     const cardDate = clone.querySelector('.transactionList .cardInfo .cardLeft ul li:nth-child(2)');
     const cardCategory = clone.querySelector('.transactionList .cardInfo .cardLeft ul li:nth-child(1)');
     const cardList = clone.querySelector('.transactionList .cardInfo .cardLeft ul');
+    const checkBox = clone.querySelector(".transactionList .checkbox1");
 
     cardTitle.textContent = transaction.name;
 
@@ -433,7 +456,8 @@ function renderTransaction(transaction) {
         cardAmount.classList.add('expense');
         cardAmount.classList.remove('income');
         cardAmount.textContent = '- ₹' + formatIndianNumber(transaction.amount);
-    } else {
+    }
+    else {
         cardAmount.classList.add('income');
         cardAmount.classList.remove('expense');
         cardAmount.textContent = '+ ₹' + formatIndianNumber(transaction.amount);
@@ -457,8 +481,19 @@ function renderTransaction(transaction) {
         cardList.classList.add('ifRecipient');
         const cardRecipient = clone.querySelector('.transactionList .cardInfo .cardLeft ul li:nth-child(3)');
         if (cardRecipient) {
-            cardRecipient.textContent = transaction.recipient;
+            cardRecipient.textContent = "• " + transaction.recipient;
         }
+    }
+
+    const storageKey = `checked_${cardTitle.textContent}_${cardAmount.textContent}_${cardDate.textContent}`;
+    const wasChecked = localStorage.getItem(storageKey);
+
+    if (wasChecked !== null && JSON.parse(wasChecked)) {
+        checkBox.classList.add('checked');
+        transactionCard.classList.add("reviewed");
+        cardTitle.style.opacity = "0.4";
+        cardTitle.style.textDecoration = "line-through";
+        transactionCard.style.backgroundColor = "#f2f2f2c4";
     }
 
     if (transaction.description) {
@@ -491,6 +526,7 @@ window.addEventListener('load', () => {
     const savedTransactions = localStorage.getItem('allTransactions');
     if (savedTransactions) {
         allTransactions = JSON.parse(savedTransactions);
+
         // Convert date strings back to Date objects
         allTransactions = allTransactions.map(t => ({
             ...t,
@@ -498,14 +534,21 @@ window.addEventListener('load', () => {
         }));
         loadAllTransactions();
 
-        const totalBalance = allTransactions.reduce((acc, transaction) => {
-            if (transaction.type === 'income') {
-                return acc + transaction.amount;
-            } else {
-                return acc - transaction.amount;
-            }
-        }, 0);
-        currentBalance = totalBalance;
+        const savedBalance = localStorage.getItem("currentBalance");
+        if (savedBalance !== null) {
+            currentBalance = parseFloat(savedBalance);
+        }
+        else {
+            const totalBalance = allTransactions.reduce((acc, transaction) => {
+                if (transaction.type === 'income') {
+                    return acc + transaction.amount;
+                }
+                else {
+                    return acc - transaction.amount;
+                }
+            }, 0);
+            currentBalance = totalBalance;
+        }
         updateBalanceDisplay();
     }
 });
@@ -517,5 +560,186 @@ function updateBalanceDisplay() {
 }
 
 
-// to do - need to make a function that updates totalSpend totalrecieved for every task deleted
+const importBtn = document.getElementById('importBtn');
+const csvFile = document.getElementById('csvFile');
+
+importBtn.addEventListener('click', () => {
+    csvFile.click();
+});
+
+csvFile.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+        const text = await file.text();
+        const lines = text.split('\n');
+
+        let headerIndex = -1;
+        for (let i = 0; i < lines.length; i++) {
+            if (lines[i].includes('Txn Date') && lines[i].includes('Debit')) {
+                headerIndex = i;
+                break;
+            }
+        }
+
+        if (headerIndex === -1) {
+            alert('❌ Invalid CSV format');
+            return;
+        }
+
+        const transactions = [];
+
+        for (let i = headerIndex + 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+
+            try {
+                const cols = [];
+                let current = '';
+                let inQuotes = false;
+                
+                for (let j = 0; j < line.length; j++) {
+                    const char = line[j];
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        cols.push(current.replace(/"/g, '').trim());
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                cols.push(current.replace(/"/g, '').trim());
+                
+                if (cols.length < 7) continue;
+                
+                const txnDate = cols[0];
+                const description = cols[2];
+                const debitFull = cols[4];  // Now contains full "1,032.70"
+                const creditFull = cols[5];  // Now contains full "500.00"
+                
+                // ✅ FIXED: Remove commas from amounts properly
+                const debit = debitFull.replace(/,/g, '');
+                const credit = creditFull.replace(/,/g, '');
+                
+                if (!txnDate || txnDate.length < 5) continue;
+                
+                let date = new Date(txnDate);
+                
+                if (isNaN(date.getTime())) {
+                    const parts = txnDate.split('-');
+                    if (parts.length === 3) {
+                        const day = parseInt(parts[0]);
+                        const monthStr = parts[1];
+                        const year = parseInt(parts[2]);
+                        const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+                        const month = months.indexOf(monthStr.toUpperCase());
+                        if (month !== -1) {
+                            date = new Date(2000 + year, month, day);
+                        } else {
+                            continue;
+                        }
+                    } else {
+                        continue;
+                    }
+                }
+                
+                let amount = 0;
+                let transactionType = 'income';
+                
+                const debitNum = parseFloat(debit);
+                const creditNum = parseFloat(credit);
+                
+                if (!isNaN(debitNum) && debitNum > 0) {
+                    amount = debitNum;
+                    transactionType = 'expense';
+                }
+                else if (!isNaN(creditNum) && creditNum > 0) {
+                    amount = creditNum;
+                    transactionType = 'income';
+                }
+                else {
+                    continue;
+                }
+                
+                console.log(`CSV Row: debit="${debit}" (${debitNum}) credit="${credit}" (${creditNum}) → amount=${amount} type=${transactionType}`);
+
+                if (isNaN(amount) || amount === 0) continue;
+
+                const descParts = description.split('/');
+                let senderReceiver = 'Unknown';
+                let category = 'Others';
+
+                if (descParts.length > 3) {
+                    senderReceiver = descParts[3].trim();
+                }
+
+                const nameUpper = senderReceiver.toUpperCase();
+
+                if (nameUpper.includes('NPCI BHIM')) {
+                    category = 'Cashback';
+                }
+                else if (nameUpper.includes('DMRC') || nameUpper.includes('METRO') || nameUpper.includes('DELHI') || nameUpper.includes('IRCTC') || nameUpper.includes('TRAIN')) {
+                    category = 'Travel';
+                }
+                else if (nameUpper.includes('SWIGGY') || nameUpper.includes('ZOMATO') || nameUpper.includes('FOOD')) {
+                    category = 'Food';
+                }
+                else if (nameUpper.includes('AMAZON') || nameUpper.includes('FLIPKART') || nameUpper.includes('MALL') || nameUpper.includes('STORE') || nameUpper.includes('SHOPPING')) {
+                    category = 'Shopping';
+                }
+                else if (nameUpper.includes('JIO') || nameUpper.includes('ELECTRICITY') || nameUpper.includes('WATER') || nameUpper.includes('GAS') || nameUpper.includes('MOBILE')) {
+                    category = 'Bills';
+                }
+                else {
+                    category = 'Others';
+                }
+
+                transactions.push({
+                    name: senderReceiver,
+                    amount: Math.abs(amount),
+                    type: transactionType,
+                    category: category,
+                    date: date,
+                    description: `UPI - ${senderReceiver}`,
+                    isOnline: true,
+                    recipient: senderReceiver,
+                    is_checked: false
+                });
+
+            } catch (err) {
+                console.error('Parse error:', err);
+                continue;
+            }
+        }
+
+        if (transactions.length === 0) {
+            alert('❌ No valid transactions found');
+            return;
+        }
+
+        allTransactions = [...transactions, ...allTransactions];
+        localStorage.setItem('allTransactions', JSON.stringify(allTransactions));
+
+        currentBalance = allTransactions.reduce((acc, t) => {
+            return t.type === 'income' ? acc + t.amount : acc - t.amount;
+        }, 0);
+
+        localStorage.setItem('currentBalance', currentBalance);
+
+        recentTransactionList.innerHTML = '';
+        loadAllTransactions();
+        updateBalanceDisplay();
+
+        alert(`✅ Imported ${transactions.length} transactions!`);
+        csvFile.value = '';
+
+    } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Error: ' + error.message);
+        csvFile.value = '';
+    }
+});
+
 // to do - also now if i am deleting a expense transaction it updating available and current balance that needs to be fixed
