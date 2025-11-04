@@ -385,7 +385,7 @@ recentTransactionList.addEventListener("click", (e) => {
 
         else {
             transactionCard.style.border = "";
-            removeTransactionFromCalculator();
+            removeTransactionFromCalculator(transactionCard);
 
             if (!isAnyCalculatorCheckboxChecked()) {
                 calculator.style.display = "none";
@@ -393,6 +393,13 @@ recentTransactionList.addEventListener("click", (e) => {
         }
     }
 });
+
+const totalIncomeOnCalculator = document.querySelector(".infoBox .totalIncome .value ");
+let incomeOnCalculator = 0;
+const totalExpenseOnCalculator = document.querySelector(".infoBox .totalExpense .value");
+let expenseOnCalculator = 0;
+const newAmountOnCalculator = document.querySelector(".infoBox .netAmount .value");
+let FinalAmountOnCalculator = 0;
 
 function addTransactionToCalculator(transactionCard) {
     const spendCardList = document.querySelector(".spendCardList");
@@ -413,30 +420,78 @@ function addTransactionToCalculator(transactionCard) {
     if (transactionCard.querySelector(".transaction").classList.contains("expense")) {
         spendCard.classList.add("expense");
         spendCard.classList.remove("income");
+        expenseOnCalculator += parseFloat(transactionCard.querySelector(".cardInfo .cardRight .transaction.expense").textContent.slice(1).replace(/[^0-9.]/g, ""));
+        console.log(expenseOnCalculator);
+        totalExpenseOnCalculator.textContent = `₹${(expenseOnCalculator)}`
     }
     else if (transactionCard.querySelector(".transaction").classList.contains("income")) {
         spendCard.classList.add("income");
         spendCard.classList.remove("expense");
+        incomeOnCalculator += parseFloat(transactionCard.querySelector(".cardInfo .cardRight .transaction.income").textContent.slice(1).replace(/[^0-9.]/g, ""));
+        console.log(incomeOnCalculator);
+        totalIncomeOnCalculator.textContent = `₹${(incomeOnCalculator)}`
+    }
+
+    if (incomeOnCalculator-expenseOnCalculator < 0 ) {
+        newAmountOnCalculator.classList.add("subtracted");
+        newAmountOnCalculator.classList.remove("added");
+        newAmountOnCalculator.textContent = `₹${(incomeOnCalculator-expenseOnCalculator).toFixed(2)}`;
+    }
+    else if (incomeOnCalculator-expenseOnCalculator >= 0 ) {
+        newAmountOnCalculator.classList.add("added");
+        newAmountOnCalculator.classList.remove("subtracted");
+        newAmountOnCalculator.textContent = `₹${(incomeOnCalculator-expenseOnCalculator).toFixed(2)}`;
     }
 
     spendCardList.append(clone);
 }
 
-function removeTransactionFromCalculator() {
+function removeTransactionFromCalculator(transactionCard) {
     const spendCardList = document.querySelector(".spendCardList");
-    const lastCard = spendCardList.querySelector(".spendCard");
-    if (lastCard) {
-        lastCard.remove();
+    if (!transactionCard) return;
+
+    const transactionElement = transactionCard.querySelector(".cardInfo .cardRight .transaction");
+    if (!transactionElement) return;
+
+    const amountText = transactionElement.textContent || "";
+    const amountValue = parseFloat(amountText.replace(/[^0-9.]/g, "")) || 0;
+    const isExpense = transactionElement.classList.contains("expense");
+    const isIncome = transactionElement.classList.contains("income");
+
+    // Remove the specific spendCard with the same title
+    const transactionTitle = transactionCard.querySelector(".cardInfo .cardLeft main p").textContent;
+    const allSpendCards = document.querySelectorAll(".spendCardList .spendCard");
+
+    allSpendCards.forEach(card => {
+        const cardTitle = card.querySelector(".cardLeft p:first-child").textContent;
+        if (cardTitle === transactionTitle) {
+            card.remove();
+        }
+    });
+
+    // Update calculator totals
+    if (isExpense) {
+        expenseOnCalculator = Math.max(0, expenseOnCalculator - amountValue);
+    } 
+    else if (isIncome) {
+        incomeOnCalculator = Math.max(0, incomeOnCalculator - amountValue);
+    }
+
+    totalIncomeOnCalculator.textContent = `₹${incomeOnCalculator.toFixed(2)}`;
+    totalExpenseOnCalculator.textContent = `₹${expenseOnCalculator.toFixed(2)}`;
+
+    newAmountOnCalculator.textContent = `₹${incomeOnCalculator - expenseOnCalculator.toFixed(2)}`;
+
+    if (incomeOnCalculator - expenseOnCalculator < 0) {
+        newAmountOnCalculator.classList.add("subtracted");
+        newAmountOnCalculator.classList.remove("added");
+    } 
+    else {
+        newAmountOnCalculator.classList.add("added");
+        newAmountOnCalculator.classList.remove("subtracted");
     }
 }
 
-recentTransactionList.addEventListener("click", (e) => {
-    const calcTransactionRemover = e.target.closest(".contentBox .spendCardList .spendCard .cardRight button");
-
-    if (calcTransactionRemover) {
-        removeTransactionFromCalculator();
-    }
-});
 
 function renderTransaction(transaction) {
     const clone = cardTemplate.content.cloneNode(true);

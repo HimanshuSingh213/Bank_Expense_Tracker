@@ -943,12 +943,12 @@ content .part6 button p {
     color: #1e2939;
 }
 
-.infoBox .netAmount.subtracted .value {
+.infoBox .netAmount .value.subtracted {
     font-size: 16px;
     color: #e7000b;
 }
 
-.infoBox .netAmount.added .value {
+.infoBox .netAmount .value.added {
     font-size: 16px;
     color: #00a63e;
 }
