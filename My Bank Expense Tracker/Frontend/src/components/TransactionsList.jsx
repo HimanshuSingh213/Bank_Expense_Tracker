@@ -1,29 +1,46 @@
+import { useAccount } from "../context/ExpenseContext";
 import TransactionItem from "./TransactionItem";
 
 export default function TransactionsList() {
-
+  const { transactions } = useAccount();
   return (
     <div className="mt-4 space-y-3">
 
-      <TransactionItem
-        title="Zomato Lunch"
-        category="Food"
-        date="10 Sep"
-        amount={-450}
-      />
+      {transactions.map((transaction) => (
+
+        <TransactionItem
+          key={transaction.id}
+          title={transaction.name}
+          category={transaction.category}
+          date={transaction.date}
+          amount={transaction.amount}
+          recipient={transaction.recipient}
+          isExpense={transaction.isExpense}
+          hasDescription={transaction.description}
+          isOnline={transaction.isOnline}
+        />
+      ))}
 
       <TransactionItem
         title="Freelance Payment"
         category="Income"
         date="9 Sep"
         amount={25000}
+        recipient="Himanshu Singh"
+        isExpense={false}
+        hasDescription={true}
+        expenseMode="cash"
       />
 
       <TransactionItem
         title="Metro Recharge"
         category="Travel"
         date="7 Sep"
-        amount={-300}
+        amount={300}
+        recipient="DMRC"
+        isExpense={true}
+        hasDescription={true}
+        expenseMode="upi"
       />
 
     </div>

@@ -1,37 +1,42 @@
 import { useState } from "react";
+import { useAccount } from "../context/ExpenseContext";
 
 export default function TransactionForm() {
 
-  const [form, setForm] = useState({
-    title: "",
-    amount: "",
-    type: "expense",
-    category: "food",
-    note: ""
-  });
+  const { addTransaction } = useAccount();
 
-  const handleChange = (e) => {
-    setForm(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
-  };
+  // input states
+  const [name, setName] = useState("");
+  const [amount, setAmount] = useState(0);
+  const [isExpense, setIsExpense] = useState(true);
+  const [recipient, setRecipient] = useState("");
+  const [category, setCategory] = useState("Food");
+  const [description, setDescription] = useState("");
+  const [isOnline, setIsOnline] = useState(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = () => {
 
-    console.log("TX SUBMITTED:", form);
+    const formData = {
+      name,
+      amount,
+      isExpense,
+      recipient,
+      category,
+      description,
+      isOnline,
+    };
+    
+    addTransaction(formData);
 
-    // later replace console log with context action
+    setName("");
+    setAmount(0);
+    setIsExpense(true);
+    setRecipient("");
+    setCategory("Food");
+    setDescription("");
+    setIsOnline(false);
 
-    setForm({
-      title: "",
-      amount: "",
-      type: "expense",
-      category: "food",
-      note: ""
-    });
-  };
+  }
 
 
   return (
@@ -66,6 +71,8 @@ export default function TransactionForm() {
               type="text"
               placeholder="e.g., Grocery Shopping"
               required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               className=" bg-gray-50
                 h-[36px]
                 rounded-lg
@@ -87,6 +94,8 @@ export default function TransactionForm() {
               type="number"
               placeholder="0.00"
               required
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
               className=" bg-gray-50
                 h-[36px]
                 rounded-lg
@@ -111,6 +120,8 @@ export default function TransactionForm() {
           <input
             type="text"
             placeholder="e.g., Thakur Naayi"
+            value={recipient}
+            onChange={(e) => setRecipient(e.target.value)}
             className=" bg-gray-50
               h-[36px]
               rounded-lg
@@ -142,7 +153,8 @@ export default function TransactionForm() {
                 outline-none
                 focus:border-indigo-400
               "
-              defaultValue="Expense"
+              value={isExpense ? "Expense" : "Income"}
+              onChange={(e) => setIsExpense(e.target.value === "Expense")}
             >
               <option value="Expense">Expense</option>
               <option value="Income">Income</option>
@@ -165,7 +177,8 @@ export default function TransactionForm() {
                 outline-none
                 focus:border-indigo-400
               "
-              defaultValue="Food"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
             >
               <option value="Food">Food</option>
               <option value="Travel">Travel</option>
@@ -186,6 +199,8 @@ export default function TransactionForm() {
 
           <textarea
             placeholder="Add notes or details about this transaction..."
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
             className="
                bg-gray-50
               min-h-[80px]
@@ -206,6 +221,9 @@ export default function TransactionForm() {
 
           <input
             type="checkbox"
+            checked={isOnline}
+            onChange={e => setIsOnline(e.target.checked)}
+
             className="accent-indigo-500"
           />
 
@@ -218,7 +236,9 @@ export default function TransactionForm() {
         {/* PART 6 */}
         <div className="flex w-full">
 
-          <button
+          <button onClick={() => (
+            handleSubmit()
+          )}
             className="
               flex items-center justify-center gap-3 w-full
               px-4 py-2

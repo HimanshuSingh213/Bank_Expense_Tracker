@@ -11,3 +11,5 @@
     font-family: var(--font-main);
   }
 }
+
+@custom-variant dark (&:where(.dark, .dark *));

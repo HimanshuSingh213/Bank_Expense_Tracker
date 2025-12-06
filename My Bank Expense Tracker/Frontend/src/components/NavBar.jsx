@@ -1,9 +1,9 @@
 import React from "react";
-import { useAccount  } from "../context/ExpenseContext";
+import { useAccount } from "../context/ExpenseContext";
 
 export default function NavBar() {
 
-  const {theme, setTheme, user} = useAccount ();
+  const {theme, setTheme, userId} = useAccount ();
 
 
   return (
@@ -16,7 +16,7 @@ export default function NavBar() {
         </p>
 
         <p className="text-slate-600 mt-2">
-          Good Morning, {user} 👋
+          Good Morning, {userId} 👋
         </p>
       </div>
 
