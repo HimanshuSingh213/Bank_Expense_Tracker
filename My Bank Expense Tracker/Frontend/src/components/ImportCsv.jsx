@@ -1,10 +1,16 @@
+import Papa from "papaparse";
+
 export default function ImportCSV() {
   const handleFile = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     console.log("CSV Selected:", file.name);
-    // later you connect your real parsing logic here
+
+    Papa.parse(file, {
+      skipEmptyLines: true,
+      complete
+    })
   };
 
   return (

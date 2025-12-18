@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAccount } from "../context/ExpenseContext";
 
 export default function TransactionItem({
+  id,
   title,
   category,
   date,
@@ -140,7 +141,7 @@ export default function TransactionItem({
           </svg>
         </button>
 
-        <button onClick={() => deleteTransaction()}
+        <button onClick={() => deleteTransaction(id)}
         className="flex items-center justify-center text-sm size-8 rounded-md hover:scale-110 transition duration-300 ease-in-out hover:bg-red-100">
           <svg className="size-4 text-red-600"
             xmlns="http://www.w3.org/2000/svg" width="16" height="16"

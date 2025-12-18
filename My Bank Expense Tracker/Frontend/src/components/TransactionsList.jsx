@@ -9,8 +9,9 @@ export default function TransactionsList() {
       {transactions.map((transaction) => (
 
         <TransactionItem
-          key={transaction.id}
-          title={transaction.name}
+          key={transaction._id}
+          id={transaction._id}
+          title={transaction.title}
           category={transaction.category}
           date={transaction.date}
           amount={transaction.amount}

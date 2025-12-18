@@ -70,6 +70,23 @@ export function ExpenseProvider({ children }) {
     getUserTransactions();
   }, [userId]);
 
+  useEffect(() => {
+    let income = 0;
+    let expense = 0;
+
+    transactions.forEach((t) => {
+      if (t.isExpense) {
+        expense += Number(t.amount);
+      } else {
+        income += Number(t.amount);
+      }
+    });
+
+    setTotalIncome(income);
+    setTotalExpense(expense);
+    setBalance(income - expense);
+  }, [transactions]);
+
   async function deleteTransaction(id) {
 
     const ok = confirm("Are you sure you want to delete this Transaction?");

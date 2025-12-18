@@ -1,6 +1,8 @@
 import React, { useState } from "react";
+import { useAccount } from "../context/ExpenseContext";
 
 export default function PersonalCard() {
+  const { balance } = useAccount();
 
   return (
     <div className="bg-linear-to-br from-[#ad46ff] via-[#f6339a] to-[#ff6900]
@@ -30,7 +32,7 @@ export default function PersonalCard() {
           {/* BALANCE */}
           <div>
             <p className="text-sm text-white/80">Available balance</p>
-            <h2 className="text-base text-white">₹0</h2>
+            <h2 className="text-base text-white">₹{balance.toLocaleString()}</h2>
 
             <input
               type="number"

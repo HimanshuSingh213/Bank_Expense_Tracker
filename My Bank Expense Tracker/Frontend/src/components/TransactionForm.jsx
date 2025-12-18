@@ -6,7 +6,7 @@ export default function TransactionForm() {
   const { addTransaction } = useAccount();
 
   // input states
-  const [name, setName] = useState("");
+  const [title, setTitle] = useState("");
   const [amount, setAmount] = useState(0);
   const [isExpense, setIsExpense] = useState(true);
   const [recipient, setRecipient] = useState("");
@@ -17,7 +17,7 @@ export default function TransactionForm() {
   const handleSubmit = () => {
 
     const formData = {
-      name,
+      title,
       amount,
       isExpense,
       recipient,
@@ -28,7 +28,7 @@ export default function TransactionForm() {
     
     addTransaction(formData);
 
-    setName("");
+    setTitle("");
     setAmount(0);
     setIsExpense(true);
     setRecipient("");
@@ -71,8 +71,8 @@ export default function TransactionForm() {
               type="text"
               placeholder="e.g., Grocery Shopping"
               required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               className=" bg-gray-50
                 h-[36px]
                 rounded-lg
