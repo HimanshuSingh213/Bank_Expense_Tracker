@@ -55,7 +55,7 @@ export function ExpenseProvider({ children }) {
     try {
       const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/transactions/${userId}`)
       const finalData = await res.json();
-      setTransactions(finalData);
+      setTransactions(finalData.reverse());
 
     }
     catch (err) {
@@ -84,7 +84,14 @@ export function ExpenseProvider({ children }) {
 
     setTotalIncome(income);
     setTotalExpense(expense);
-    setBalance(income - expense);
+
+    if (transactions.length > 0) {
+      setBalance(transactions[0].balance);
+    }
+    else {
+      setBalance(0);
+    }
+
   }, [transactions]);
 
   async function deleteTransaction(id) {
@@ -110,6 +117,33 @@ export function ExpenseProvider({ children }) {
 
   async function addTransaction(formData) {
     try {
+      // CSV import (in array)
+      if (Array.isArray(formData)) {
+
+        for (const txn of formData) {
+          const res = await fetch(
+            `${import.meta.env.VITE_BACKEND_URL}/api/transactions`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                ...txn,
+                userId,
+              }),
+            }
+          );
+
+          if (!res.ok) {
+            console.error("Failed to add transaction:", txn);
+          }
+        }
+
+        // fetch ONCE after full CSV import
+        await getUserTransactions();
+        return;
+      }
+
+      // For Single Transaction
       const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/transactions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

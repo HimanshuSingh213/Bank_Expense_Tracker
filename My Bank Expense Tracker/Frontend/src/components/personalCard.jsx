@@ -32,7 +32,7 @@ export default function PersonalCard() {
           {/* BALANCE */}
           <div>
             <p className="text-sm text-white/80">Available balance</p>
-            <h2 className="text-base text-white">₹{balance.toLocaleString()}</h2>
+            <h2 className="text-base text-white">₹{balance}</h2>
 
             <input
               type="number"

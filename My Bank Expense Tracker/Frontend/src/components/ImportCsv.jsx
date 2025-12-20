@@ -1,6 +1,10 @@
 import Papa from "papaparse";
+import { useAccount } from "../context/ExpenseContext";
 
 export default function ImportCSV() {
+
+  const { addTransaction } = useAccount();
+
   const handleFile = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -9,8 +13,168 @@ export default function ImportCSV() {
 
     Papa.parse(file, {
       skipEmptyLines: true,
-      complete
-    })
+      complete: async (result) => {
+        const data = result.data;
+        console.log("FULL CSV DATA:", data);
+
+        const metadata = data.findIndex((row) => row[1] && row[1].includes("Details"));
+
+        if (metadata === -1) {
+          console.error("Txn Date header not found");
+          return;
+        }
+
+        const transactionArray = [];
+
+        for (let i = metadata + 1; i < data.length; i++) {
+          const row = data[i];
+          console.log(row);
+          if (!row[0]) continue;
+
+          const debit = row[4]?.replace(/,/g, "").trim();
+          const credit = row[5]?.replace(/,/g, "").trim();
+
+          if ((!debit && !credit) || (Number(debit) === 0 && Number(credit) === 0)) {
+            continue;
+          }
+
+          const runningBalance = Number(row[5].replace(/,/g, "").trim());
+
+          console.log("Running Balance (number):", runningBalance);
+
+          let isExpense = false;
+          if (debit && Number(debit) > 0) {
+            isExpense = true;
+          }
+          const amount = isExpense ? Number(debit) : Number(credit);
+
+          const description = row[2].trim();
+          const party = extractParty(description);
+          const date = formatDate(row[0]);
+
+          const category = categorizeTransaction(party, description);
+
+          transactionArray.push({
+            title: party,
+            amount,
+            isExpense,
+            recipient: party,
+            category,
+            description,
+            isOnline: description.includes("UPI"),
+            date,
+            balance: Number(runningBalance.toFixed(2)),
+          });
+
+        }
+        transactionArray.reverse();
+        if (transactionArray.length > 0) {
+          addTransaction(transactionArray);
+        }
+
+      }
+
+    });
+
+    function formatDate(sbiDate) {
+      if (!sbiDate) return "";
+
+      const [dd, mm, yy] = sbiDate.split("-");
+
+      const day = String(Number(dd));
+      const year = `20${yy}`;
+
+      return `${day} ${mm} ${year}`;
+    }
+
+
+    function categorizeTransaction(partyName = "", description = "") {
+      const text = `${partyName} ${description}`.toLowerCase();
+
+      // TRAVEL
+      if (
+        text.includes("dmrc") ||
+        text.includes("delhi metro") ||
+        text.includes("irctc") ||
+        text.includes("railway") ||
+        text.includes("uber") ||
+        text.includes("ola")
+      ) {
+        return "Travel";
+      }
+
+      // FOOD
+      if (
+        text.includes("zomato") ||
+        text.includes("swiggy") ||
+        text.includes("domino") ||
+        text.includes("pizza") ||
+        text.includes("restaurant") ||
+        text.includes("cafe")
+      ) {
+        return "Food";
+      }
+
+      // SHOPPING
+      if (
+        text.includes("amazon") ||
+        text.includes("flipkart") ||
+        text.includes("myntra") ||
+        text.includes("ajio") ||
+        text.includes("meesho")
+      ) {
+        return "Shopping";
+      }
+
+      // BILLS / UTILITIES
+      if (
+        text.includes("bhim") ||
+        text.includes("paytm") ||
+        text.includes("phonepe") ||
+        text.includes("upi") ||
+        text.includes("electric") ||
+        text.includes("recharge") ||
+        text.includes("bill")
+      ) {
+        return "Bills";
+      }
+
+      return "Others";
+    }
+
+
+    function extractParty(description = "") {
+      const text = description.toUpperCase();
+
+      if (text.includes("DMRC")) return "DMRC";
+      if (text.includes("IRCTC")) return "IRCTC";
+      if (text.includes("AMAZON")) return "Amazon";
+      if (text.includes("FLIPKART")) return "Flipkart";
+      if (text.includes("MYNTRA")) return "Myntra";
+      if (text.includes("ZOMATO")) return "Zomato";
+      if (text.includes("SWIGGY")) return "Swiggy";
+      if (text.includes("JIO")) return "Jio";
+      if (text.includes("PAYTM")) return "Paytm";
+      if (text.includes("PHONEPE")) return "PhonePe";
+      if (text.includes("BHIM")) return "BHIM";
+
+      // UPI 
+      if (text.includes("UPI")) {
+        const parts = description.split("/");
+        for (const part of parts) {
+          if (part.length > 3 && !part.match(/UPI|CR|DR|REF|YESB|HDFC|ICIC|UTIB|SBIN/i)) {
+            return part.trim();
+          }
+        }
+        return "UPI Transfer";
+      }
+
+      // Cheque
+      if (text.includes("CHQ")) return "Cheque";
+
+      return "Others";
+    }
+
   };
 
   return (
@@ -28,9 +192,9 @@ export default function ImportCSV() {
           strokeLinejoin="round"
           className="h-[18px]"
         >
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/>
-          <line x1="12" y1="15" x2="12" y2="3"/>
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
         </svg>
 
         {/* TEXT */}
