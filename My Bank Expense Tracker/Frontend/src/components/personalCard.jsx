@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useAccount } from "../context/ExpenseContext";
 
 export default function PersonalCard() {

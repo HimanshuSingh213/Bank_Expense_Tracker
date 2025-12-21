@@ -19,6 +19,7 @@ export default function TransactionsList() {
           isExpense={transaction.isExpense}
           hasDescription={transaction.description}
           isOnline={transaction.isOnline}
+          balance={transaction.balance}
         />
       ))}
 

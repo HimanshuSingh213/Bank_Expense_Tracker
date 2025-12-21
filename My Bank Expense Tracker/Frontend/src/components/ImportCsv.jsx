@@ -3,7 +3,7 @@ import { useAccount } from "../context/ExpenseContext";
 
 export default function ImportCSV() {
 
-  const { addTransaction } = useAccount();
+  const { addTransaction, accountId } = useAccount();
 
   const handleFile = (e) => {
     const file = e.target.files[0];
@@ -26,13 +26,16 @@ export default function ImportCSV() {
 
         const transactionArray = [];
 
-        for (let i = metadata + 1; i < data.length; i++) {
+        for (let i = data.length - 8; i >  metadata + 1; i--) {
           const row = data[i];
           console.log(row);
           if (!row[0]) continue;
 
-          const debit = row[4]?.replace(/,/g, "").trim();
-          const credit = row[5]?.replace(/,/g, "").trim();
+          const debit = row[3]?.replace(/,/g, "").trim();
+          const credit = row[4]?.replace(/,/g, "").trim();
+
+          console.log("Credit " + credit);
+          console.log("Debit " + debit);
 
           if ((!debit && !credit) || (Number(debit) === 0 && Number(credit) === 0)) {
             continue;
@@ -40,19 +43,25 @@ export default function ImportCSV() {
 
           const runningBalance = Number(row[5].replace(/,/g, "").trim());
 
-          console.log("Running Balance (number):", runningBalance);
+          console.log("Running Balance (number): ", runningBalance);
 
           let isExpense = false;
           if (debit && Number(debit) > 0) {
             isExpense = true;
           }
           const amount = isExpense ? Number(debit) : Number(credit);
-
+          
           const description = row[2].trim();
           const party = extractParty(description);
           const date = formatDate(row[0]);
-
+          
           const category = categorizeTransaction(party, description);
+          
+          console.log("amount: " + amount);
+          console.log("description: " + description);
+          console.log("party: " + party);
+          console.log("date: " + date);
+
 
           transactionArray.push({
             title: party,
@@ -67,9 +76,23 @@ export default function ImportCSV() {
           });
 
         }
-        transactionArray.reverse();
+       
         if (transactionArray.length > 0) {
           addTransaction(transactionArray);
+          console.log(transactionArray[0].balance);
+          setTimeout(async () => {
+            await fetch(
+              `${import.meta.env.VITE_BACKEND_URL}/api/accounts/${accountId}/balance`,
+              {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  balance: transactionArray[0].balance,
+                }),
+              }
+            );          
+          }, 20000);
+          
         }
 
       }
@@ -79,12 +102,16 @@ export default function ImportCSV() {
     function formatDate(sbiDate) {
       if (!sbiDate) return "";
 
-      const [dd, mm, yy] = sbiDate.split("-");
+      const [dd, mm, yyyy] = sbiDate.split("/");
 
       const day = String(Number(dd));
-      const year = `20${yy}`;
+      const months = [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+      ];
+      const month = months[Number(mm) - 1];
 
-      return `${day} ${mm} ${year}`;
+      return `${day} ${month} ${yyyy}`;
     }
 
 

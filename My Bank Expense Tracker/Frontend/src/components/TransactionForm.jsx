@@ -95,7 +95,7 @@ export default function TransactionForm() {
               placeholder="0.00"
               required
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => setAmount(Number(e.target.value))}
               className=" bg-gray-50
                 h-[36px]
                 rounded-lg

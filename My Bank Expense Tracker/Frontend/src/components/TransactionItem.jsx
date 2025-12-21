@@ -10,7 +10,7 @@ export default function TransactionItem({
   recipient,
   isExpense,
   hasDescription,
-  isOnline
+  isOnline,
 }) {
 
   const [checked1, setChecked1] = useState(false);
@@ -23,7 +23,7 @@ export default function TransactionItem({
     Travel: "text-[#ca3500] bg-[#ff69001a] border border-[#ff690033]",
     Shopping: "text-[#8200db] bg-[#ad46ff1a] border border-[#ad46ff33]",
     Bills: "text-[#1447e6] bg-[#2b7fff1a] border border-[#2b7fff33]",
-    Other: "text-[#364153] bg-[#6a72821a] border border-[#6a728233]",
+    Others: "text-[#364153] bg-[#6a72821a] border border-[#6a728233]",
   };
 
   return (

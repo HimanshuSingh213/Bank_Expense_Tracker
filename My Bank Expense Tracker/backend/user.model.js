@@ -15,20 +15,20 @@ const userSchema = new mongoose.Schema({
     required: true,
   },
 
-  bankInfo: {
-    bankName: {
-      type: String,
-      required: true,
-    },
-    accountType: {
-      type: String,
-      required: true,
-    },
-    currentBalance: {
-      type: Number,
-      default: 0
-    },
-  }
+  // bankInfo: {
+  //   bankName: {
+  //     type: String,
+  //     required: true,
+  //   },
+  //   accountType: {
+  //     type: String,
+  //     required: true,
+  //   },
+  //   currentBalance: {
+  //     type: Number,
+  //     default: 0
+  //   },
+  // }
 }, { timestamps: true });
 
 

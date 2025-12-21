@@ -1,48 +1,60 @@
 import mongoose from 'mongoose';
 
 const transactionSchema = new mongoose.Schema({
-    userId: { 
-        type: String, 
-        required: true 
+    userId: {
+        type: String,
+        required: true
     },
 
-    title: { 
-        type: String, 
-        required: true 
-    },
-    amount: { 
-        type: Number, 
-        required: true 
+    accountId: {
+        // type: mongoose.Schema.Types.ObjectId,
+        // ref: "accountInfo",
+        type: String,
+        required: true,
     },
 
-    isExpense: { 
-        type: Boolean, 
-        required: true 
+    title: {
+        type: String,
+        required: true
     },
-    category: { 
-        type: String, 
-        required: true 
-    },
-
-    recipient: { 
-        type: String 
-    },
-    description: { 
-        type: String 
-    },
-    isOnline: { 
-        type: Boolean, 
-        default: false 
+    amount: {
+        type: Number,
+        required: true
     },
 
-    reviewed: { 
-        type: Boolean, 
-        default: false 
+    isExpense: {
+        type: Boolean,
+        required: true
     },
-    inCalculator: { 
-        type: Boolean, 
-        default: false 
+    category: {
+        type: String,
+        required: true
     },
+
+    recipient: {
+        type: String
+    },
+    description: {
+        type: String
+    },
+    isOnline: {
+        type: Boolean,
+        default: false
+    },
+
+    reviewed: {
+        type: Boolean,
+        default: false
+    },
+    inCalculator: {
+        type: Boolean,
+        default: false
+    },
+    date: {
+        type: String,
+        default: Date.now
+    },
+
 }, { timestamps: true });
 
-export const transaction = mongoose.model('transaction', transactionSchema )
+export const transaction = mongoose.model('transaction', transactionSchema)

@@ -9,6 +9,7 @@ export const useAccount = () => {
 export function ExpenseProvider({ children }) {
   const [theme, setTheme] = useState("light"); // "light" | "dark"
   const [userId, setUserId] = useState("Himanshu");
+  const [accountId, setAccountId] = useState("SBI_MAIN_ACCOUNT");
 
   // Transaction states
   const [transactions, setTransactions] = useState([]);
@@ -19,43 +20,11 @@ export function ExpenseProvider({ children }) {
   const [totalExpense, setTotalExpense] = useState(0);
   const [balance, setBalance] = useState(0);
 
-  // function findDate() {
-  //   const today = new Date();
-
-  //   const day = today.toLocaleString('en-GB', { day: 'numeric' });
-  //   const month = today.toLocaleString('en-GB', { month: 'short' });
-  //   const year = today.toLocaleString('en-GB', { year: 'numeric' });
-
-  //   const formattedDate = `${day} ${month} ${year}`;
-
-  //   return formattedDate;
-  // }
-
-  // function addTransaction(name, amount, isExpense, recipient, category, description, isOnline) {
-  //   if (!name || !amount || !category) return;
-
-  //   setTransactions((prev) => [
-  //     {
-  //       id: Date.now(),
-  //       name: name,
-  //       amount: amount,
-  //       isExpense: isExpense,
-  //       recipient: recipient,
-  //       category: category,
-  //       description: description,
-  //       isOnline: isOnline,
-  //       date: findDate(),
-  //     }
-  //     , ...prev]);
-
-
-  // }
-
   async function getUserTransactions() {
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/transactions/${userId}`)
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/transactions/${userId}/${accountId}`)
       const finalData = await res.json();
-      setTransactions(finalData.reverse());
+      setTransactions(finalData);
 
     }
     catch (err) {
@@ -65,32 +34,47 @@ export function ExpenseProvider({ children }) {
       setLoading(false);
     }
   }
+  async function getBalance() {
+    const res = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/accounts/account/${accountId}`
+    );
+    const data = await res.json();
+    setBalance(data.currentBalance);
+  }
+  
+  useEffect(() => {
+    getBalance();
+  }, [accountId]);
 
   useEffect(() => {
+    if (!accountId) return;
     getUserTransactions();
-  }, [userId]);
+  }, [userId, accountId]);
 
   useEffect(() => {
     let income = 0;
     let expense = 0;
 
+    const now = new Date();
+    const thirtyDays = 30 * 24 * 60 * 60 * 1000;
     transactions.forEach((t) => {
-      if (t.isExpense) {
-        expense += Number(t.amount);
-      } else {
-        income += Number(t.amount);
+      const txnDate = new Date(t.date || t.createdAt);
+      if (isNaN(txnDate.getTime())) return;
+
+      const diff = now - txnDate;
+
+      if (diff <= thirtyDays) {
+        if (t.isExpense) {
+          expense += Number(t.amount);
+        }
+        else {
+          income += Number(t.amount);
+        }
       }
     });
 
     setTotalIncome(income);
     setTotalExpense(expense);
-
-    if (transactions.length > 0) {
-      setBalance(transactions[0].balance);
-    }
-    else {
-      setBalance(0);
-    }
 
   }, [transactions]);
 
@@ -129,6 +113,7 @@ export function ExpenseProvider({ children }) {
               body: JSON.stringify({
                 ...txn,
                 userId,
+                accountId,
               }),
             }
           );
@@ -150,12 +135,13 @@ export function ExpenseProvider({ children }) {
         body: JSON.stringify({
           ...formData,
           userId,
+          accountId,
         }),
 
       });
 
       const saved = await res.json();
-      // setTransactions(prev => [saved, ...prev]);
+      setTransactions(prev => [saved, ...prev]);
       await getUserTransactions();
 
     } catch (err) {
@@ -200,6 +186,7 @@ export function ExpenseProvider({ children }) {
     setTheme,
     userId,
     setUserId,
+    accountId,
     totalIncome,
     totalExpense,
     balance,
