@@ -52,7 +52,12 @@ const transactionSchema = new mongoose.Schema({
     },
     date: {
         type: String,
-        default: Date.now
+        default: () =>
+            new Date().toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+            }),
     },
 
 }, { timestamps: true });

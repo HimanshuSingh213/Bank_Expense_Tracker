@@ -1,6 +1,35 @@
+import { useAccount } from "../context/ExpenseContext";
+
 export default function Calculator() {
+  const { calculatorTransactions, toggleCalculator } = useAccount();
+
+  let income = 0;
+  let expense = 0;
+
+  calculatorTransactions.forEach(txn => {
+    if (!txn.isExpense) {
+      income += Number(txn.amount);
+    }
+    else {
+      expense += Number(txn.amount);
+    }
+  });
+
+  async function clearALL() {
+    await calculatorTransactions.forEach(txn => {
+      toggleCalculator(txn._id, true);
+    })
+  }
+
+  let netAmount = income - expense;
+  let neg = false;
+  if (netAmount < 0) {
+    neg = true;
+    netAmount = netAmount * -1;
+  }
+
   return (
-    <div className="flex flex-col gap-6 rounded-xl border p-6 bg-linear-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border-indigo-200 dark:border-indigo-800 shadow-lg">
+    <div className={`flex-col gap-6 rounded-xl border p-6 bg-linear-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border-indigo-200 dark:border-indigo-800 shadow-lg ${calculatorTransactions.length > 0 ? "flex" : "hidden"}`}>
 
       {/* HEADER */}
       <div className="flex items-center justify-between mb-4">
@@ -25,7 +54,8 @@ export default function Calculator() {
           </h4>
         </div>
 
-        <button className="text-sm px-2 py-1
+        <button onClick={() => clearALL()}
+          className="text-sm px-2 py-1
                            rounded-md
                            border border-black/10
                            hover:bg-slate-200 transition">
@@ -36,11 +66,23 @@ export default function Calculator() {
 
 
       {/* LIST */}
-      <div className="max-h-[200px]  space-y-3">
+      <div className="max-h-[200px] space-y-3 overflow-auto">
 
-        <CalcRow title="Zomato order" date="6 Dec 2025" amount="-₹450" />
+        {/* <CalcRow title="Zomato order" date="6 Dec 2025" amount="-₹450" />
         <CalcRow title="Monthly salary" date="6 Dec 2025" amount="+₹30,000" />
-        <CalcRow title="Credit card bill" date="6 Dec 2025" amount="-₹7,200" />
+        <CalcRow title="Credit card bill" date="6 Dec 2025" amount="-₹7,200" /> */}
+        {calculatorTransactions.map((txn) => (
+          <CalcRow
+            key={txn._id}
+            id={txn._id}
+            title={txn.title}
+            date={txn.date}
+            amount={txn.amount}
+            isExpense={txn.isExpense}
+            inCalculator={txn.inCalculator}
+            toggleCalculator={toggleCalculator}
+          />
+        ))}
 
       </div>
 
@@ -48,16 +90,16 @@ export default function Calculator() {
       {/* FOOTER */}
       <div className="space-y-2 pt-4 border-t border-indigo-200 dark:border-indigo-800">
 
-        <FooterRow label="Total Income" value="₹30,000" income />
-        <FooterRow label="Total Expense" value="₹7,650" />
+        <FooterRow label="Total Income" value={income.toFixed(2)} income />
+        <FooterRow label="Total Expense" value={expense.toFixed(2)} />
         <div className="flex items-center justify-between pt-2 border-t border-indigo-200 dark:border-indigo-800">
           <span className="text-gray-800 dark:text-gray-200">Net Amount:</span>
-          <span className="text-red-600">₹-3500.00</span>
+          <span className={neg ? "text-red-600" : "text-green-600"}>{neg ? "-" : ""}₹{netAmount.toFixed(2)}</span>
         </div>
         <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
           <span>Selected Transactions:</span>
           <span className="inline-flex items-center justify-center rounded-md border border-gray-300 px-2 py-0.5 text-xs text-gray-800 font-medium whitespace-nowrap gap-1 overflow-hidden">
-            1
+            {calculatorTransactions.length}
           </span>
         </div>
 
@@ -68,7 +110,7 @@ export default function Calculator() {
 }
 
 
-function CalcRow({ title, amount, date }) {
+function CalcRow({ title, amount, date, isExpense, toggleCalculator, id, inCalculator }) {
   return (
     <div className=" overflow-y-auto gap-1
                     flex items-center justify-between p-2 bg-white  rounded-lg
@@ -85,15 +127,12 @@ function CalcRow({ title, amount, date }) {
 
       <div className="flex gap-2 items-center justify-end">
         <span
-          className={`font-normal text-sm ${amount.startsWith("-")
-            ? "text-red-600"
-            : "text-green-600"
-            }`}
-        >
-          {amount}
+          className={`font-normal text-sm ${isExpense ? "text-red-600" : "text-green-600"}`}>
+          {isExpense ? "-" : "+"}₹{Number(amount).toFixed(2)}
         </span>
 
-        <button className="size-6 flex items-center justify-center p-1 rounded-md hover:bg-gray-100 transition">
+        <button onClick={() => toggleCalculator(id, inCalculator)}
+          className="size-6 flex items-center justify-center p-1 rounded-md hover:bg-gray-100 transition">
           <svg className="size-4 text-black"
             xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
             fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"

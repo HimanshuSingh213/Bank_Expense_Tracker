@@ -20,10 +20,12 @@ export default function TransactionsList() {
           hasDescription={transaction.description}
           isOnline={transaction.isOnline}
           balance={transaction.balance}
+          checked1={transaction.reviewed}
+          checked2={transaction.inCalculator}
         />
       ))}
 
-      <TransactionItem
+      {/* <TransactionItem
         title="Freelance Payment"
         category="Income"
         date="9 Sep"
@@ -43,7 +45,7 @@ export default function TransactionsList() {
         isExpense={true}
         hasDescription={true}
         expenseMode="upi"
-      />
+      /> */}
 
     </div>
   );

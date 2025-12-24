@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useAccount } from "../context/ExpenseContext";
 
 export default function TransactionItem({
@@ -11,12 +10,12 @@ export default function TransactionItem({
   isExpense,
   hasDescription,
   isOnline,
+  checked1,
+  checked2,
 }) {
 
-  const [checked1, setChecked1] = useState(false);
-  const [checked2, setChecked2] = useState(false);
+  const { toggleReviewed, toggleCalculator, deleteTransaction } = useAccount();
 
-  const{updateTransaction, deleteTransaction} = useAccount();
 
   const categoryVariants = {
     Food: "text-[#008236] bg-[#00c9511a] border border-[#00c95133]",
@@ -41,7 +40,7 @@ export default function TransactionItem({
 
       {/* CHECKBOX */}
       <div className="flex gap-2 items-center justify-center">
-        <button onClick={() => (checked1 ? setChecked1(false) : setChecked1(true))}
+        <button onClick={() => toggleReviewed(id, checked1)}
           className={`checkbox1 size-4 border shadow-sm rounded-sm transition duration-300 ease-in-out flex items-center justify-center cursor-pointer ${checked1 ? "bg-[#030213] text-white border-[#030213]" : "border-black/90 bg-white"}`}>
           <svg className={`${checked1 ? "block" : "hidden"}`}
             xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
@@ -50,7 +49,7 @@ export default function TransactionItem({
             <path d="M20 6 9 17l-5-5"></path>
           </svg>
         </button>
-        <button onClick={() => (checked2 ? setChecked2(false) : setChecked2(true))}
+        <button onClick={() => toggleCalculator(id, checked2)}
           className={`checkbox1 size-4 border shadow-sm rounded-sm transition duration-300 ease-in-out flex items-center justify-center cursor-pointer ${checked2 ? "bg-[#615fff] text-white border-[#030213]" : "border-[#615fff] bg-[#f3f3f5]"}`}>
           <svg className={`${checked2 ? "block" : "hidden"}`}
             xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"

@@ -14,11 +14,13 @@ export function ExpenseProvider({ children }) {
   // Transaction states
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [importingTxn, setImportingTxn] = useState(false);
 
   // stats states
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalExpense, setTotalExpense] = useState(0);
   const [balance, setBalance] = useState(0);
+
 
   async function getUserTransactions() {
     try {
@@ -41,7 +43,7 @@ export function ExpenseProvider({ children }) {
     const data = await res.json();
     setBalance(data.currentBalance);
   }
-  
+
   useEffect(() => {
     getBalance();
   }, [accountId]);
@@ -103,6 +105,7 @@ export function ExpenseProvider({ children }) {
     try {
       // CSV import (in array)
       if (Array.isArray(formData)) {
+        setImportingTxn(true); // starts Loading
 
         for (const txn of formData) {
           const res = await fetch(
@@ -121,9 +124,10 @@ export function ExpenseProvider({ children }) {
           if (!res.ok) {
             console.error("Failed to add transaction:", txn);
           }
+
         }
 
-        // fetch ONCE after full CSV import
+        // fetching after full CSV import
         await getUserTransactions();
         return;
       }
@@ -146,6 +150,10 @@ export function ExpenseProvider({ children }) {
 
     } catch (err) {
       console.error("Failed to add transaction:", err);
+    }
+    finally {
+      // END loading
+      setImportingTxn(false);
     }
   }
 
@@ -175,6 +183,8 @@ export function ExpenseProvider({ children }) {
     updateTransaction(id, { inCalculator: !value });
   }
 
+  let calculatorTransactions = transactions.filter(t => t.inCalculator);
+
   useEffect(() => {
     const root = document.documentElement;
     if (theme === "dark") root.classList.add("dark");
@@ -199,6 +209,9 @@ export function ExpenseProvider({ children }) {
     toggleReviewed,
     toggleCalculator,
     deleteTransaction,
+    importingTxn,
+    getBalance, 
+    calculatorTransactions,
   };
 
   return (

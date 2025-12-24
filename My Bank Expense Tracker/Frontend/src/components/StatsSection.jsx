@@ -1,12 +1,12 @@
 import { useAccount } from "../context/ExpenseContext";
 export default function StatsSection() {
-  const {totalIncome, totalExpense} = useAccount();
+  const {totalIncome, totalExpense, balance} = useAccount();
   return (
     <div className="grid grid-cols-3 gap-3 mt-10">
 
       <StatCard
         title="Total Income (last 30days)"
-        amount={totalIncome.toFixed(2)}
+        amount={parseFloat(totalIncome.toFixed(2))}
         bgColor="bg-gradient-to-br from-[#f0fdf4] to-[#ecfdf5] border border-[#b9f8cf]"
         amountColor="text-[#0d542b]"
         titleColor="text-[#008236]"
@@ -23,7 +23,7 @@ export default function StatsSection() {
 
       <StatCard
         title="Total Spent (last 30days)"
-        amount={totalExpense.toFixed(2)}
+        amount={parseFloat(totalExpense.toFixed(2))}
         bgColor="bg-gradient-to-br from-[#fef2f2] to-[#fdf2f8] border border-[#ffc9c9]"
         amountColor="text-[#82181a]"
         titleColor="text-[#c10007]"
@@ -40,7 +40,7 @@ export default function StatsSection() {
 
       <StatCard
         title="Net Balance"
-        amount="0"
+        amount={parseFloat(balance)}
         bgColor="bg-gradient-to-br from-[#eff6ff] to-[#eef2ff] border border-[#bedbff]"
         amountColor="text-[#1c398e]"
         titleColor="text-[#1447e6]"

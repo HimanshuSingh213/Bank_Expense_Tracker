@@ -83,6 +83,8 @@ app.get("/api/accounts/account/:accountId", async (req, res) => {
 // Get all Transactions of a user
 app.get("/api/transactions/:userId/:accountId", async (req, res) => {
     const list = await transaction.find({ userId: req.params.userId, accountId: req.params.accountId })
+        .sort({ createdAt: -1 });
+
     res.json(list);
 });
 
@@ -101,6 +103,7 @@ app.post("/api/transactions", async (req, res) => {
             recipient: req.body.recipient,
             description: req.body.description,
             isOnline: req.body.isOnline,
+            date: req.body.date,
         });
 
         const savedTransaction = await newTransaction.save();

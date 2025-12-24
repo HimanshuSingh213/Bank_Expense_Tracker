@@ -91,7 +91,7 @@ export default function TransactionForm() {
             </label>
 
             <input
-              type="number"
+              type="text"
               placeholder="0.00"
               required
               value={amount}
@@ -221,13 +221,14 @@ export default function TransactionForm() {
 
           <input
             type="checkbox"
+            id="isOnline" 
             checked={isOnline}
             onChange={e => setIsOnline(e.target.checked)}
 
             className="accent-indigo-500"
           />
 
-          <label className="text-sm font-medium text-gray-800">
+          <label htmlFor="isOnline" className="text-sm font-medium text-gray-800">
             Online (UPI)
           </label>
 

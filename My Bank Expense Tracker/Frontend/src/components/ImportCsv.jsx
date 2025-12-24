@@ -3,7 +3,7 @@ import { useAccount } from "../context/ExpenseContext";
 
 export default function ImportCSV() {
 
-  const { addTransaction, accountId } = useAccount();
+  const { addTransaction, accountId, importingTxn, getBalance, } = useAccount();
 
   const handleFile = (e) => {
     const file = e.target.files[0];
@@ -26,7 +26,7 @@ export default function ImportCSV() {
 
         const transactionArray = [];
 
-        for (let i = data.length - 8; i >  metadata + 1; i--) {
+        for (let i = data.length - 8; i > metadata + 1; i--) {
           const row = data[i];
           console.log(row);
           if (!row[0]) continue;
@@ -50,21 +50,24 @@ export default function ImportCSV() {
             isExpense = true;
           }
           const amount = isExpense ? Number(debit) : Number(credit);
-          
-          const description = row[2].trim();
+
+          const description = row[1].trim();
+
           const party = extractParty(description);
           const date = formatDate(row[0]);
-          
+          const partyName = extractPartyName(description);
+
           const category = categorizeTransaction(party, description);
-          
+
+          console.log("To: ", partyName);
           console.log("amount: " + amount);
           console.log("description: " + description);
           console.log("party: " + party);
           console.log("date: " + date);
 
 
-          transactionArray.push({
-            title: party,
+          transactionArray.unshift({
+            title: partyName,
             amount,
             isExpense,
             recipient: party,
@@ -76,23 +79,24 @@ export default function ImportCSV() {
           });
 
         }
-       
+
         if (transactionArray.length > 0) {
-          addTransaction(transactionArray);
-          console.log(transactionArray[0].balance);
-          setTimeout(async () => {
-            await fetch(
-              `${import.meta.env.VITE_BACKEND_URL}/api/accounts/${accountId}/balance`,
-              {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  balance: transactionArray[0].balance,
-                }),
-              }
-            );          
-          }, 20000);
-          
+          await addTransaction(transactionArray);
+          console.log(transactionArray[transactionArray.length-1].balance);
+
+          await fetch(
+            `${import.meta.env.VITE_BACKEND_URL}/api/accounts/${accountId}/balance`,
+            {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                balance: transactionArray[transactionArray.length-1].balance,
+              }),
+            }
+          );
+
+          await getBalance();
+
         }
 
       }
@@ -188,19 +192,60 @@ export default function ImportCSV() {
       // UPI 
       if (text.includes("UPI")) {
         const parts = description.split("/");
-        for (const part of parts) {
-          if (part.length > 3 && !part.match(/UPI|CR|DR|REF|YESB|HDFC|ICIC|UTIB|SBIN/i)) {
-            return part.trim();
+      
+        if (parts.length >= 4) {
+          const name = parts[3]
+            .replace(/[^a-zA-Z\s]/g, "")
+            .trim();
+      
+          if (name.length >= 2) {
+            return toTitleCase(name);
           }
         }
+      
         return "UPI Transfer";
       }
+      
 
       // Cheque
       if (text.includes("CHQ")) return "Cheque";
 
       return "Others";
     }
+
+    function extractPartyName(description = "") {
+      if (!description) return "Unknown";
+    
+      const clean = description
+        .replace(/\u00A0/g, " ")
+        .replace(/\n/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    
+      const parts = clean.split("/");
+    
+      if (parts.length >= 4) {
+        const name = parts[3]
+          .replace(/[^a-zA-Z\s]/g, "")
+          .trim();
+    
+        if (name.length >= 2) {
+          return toTitleCase(name);
+        }
+      }
+    
+      return "Unknown";
+    }    
+
+    function toTitleCase(str) {
+      return str
+        .toLowerCase()
+        .split(" ")
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(" ");
+    }    
+
 
   };
 

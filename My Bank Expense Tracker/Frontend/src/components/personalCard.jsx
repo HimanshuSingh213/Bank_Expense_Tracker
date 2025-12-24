@@ -1,8 +1,19 @@
 import React from "react";
 import { useAccount } from "../context/ExpenseContext";
+import { useRef, useEffect, useState } from "react";
 
 export default function PersonalCard() {
-  const { balance } = useAccount();
+  const { balance, setBalance} = useAccount();
+  
+  const [editedBalance, isEditingBalance] = useState(false);
+  const [localBalance, setLocalBalance] = useState(balance);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (editedBalance) {
+      inputRef.current?.focus();
+    }
+  }, [editedBalance]); 
 
   return (
     <div className="bg-linear-to-br from-[#ad46ff] via-[#f6339a] to-[#ff6900]
@@ -11,17 +22,17 @@ export default function PersonalCard() {
                     transition-all duration-400 ease-in-out hover:scale-[1.015] hover:shadow-xl">
 
       {/* HEADER */}
-      <div className="flex items-center justify-between mb-4">
+      <div className={`flex items-center justify-between ${editedBalance? "mb-2" : "mb-4"}`}>
 
         <div className="flex items-center gap-4">
 
           {/* LOGO */}
           <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
             <svg xmlns="http://www.w3.org/2000/svg"
-                 width="24" height="24" viewBox="0 0 24 24"
-                 fill="none" stroke="white"
-                 strokeWidth="2" strokeLinecap="round"
-                 strokeLinejoin="round">
+              width="24" height="24" viewBox="0 0 24 24"
+              fill="none" stroke="white"
+              strokeWidth="2" strokeLinecap="round"
+              strokeLinejoin="round">
               <path
                 d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"
               />
@@ -32,13 +43,17 @@ export default function PersonalCard() {
           {/* BALANCE */}
           <div>
             <p className="text-sm text-white/80">Available balance</p>
-            <h2 className="text-base text-white">₹{balance}</h2>
+            <h2 className={`${editedBalance? "hidden" : "flex"} text-base text-white`}>₹{balance}</h2>
 
-            <input
+            <input 
               type="number"
-              className="hidden mt-1 h-8 w-[90%] 
+              ref={inputRef}
+              value={localBalance}
+              onChange={(e) => setLocalBalance(e.target.value)}
+              inputMode="numeric" pattern="[0-9]*"
+              className= {` ${editedBalance? "flex" : "hidden"} mt-1 h-8 w-[90%] 
                          bg-white/20 border border-white/30
-                         rounded-md px-3 text-sm text-white outline-none"
+                         rounded-md px-3 text-xs text-white outline-none hover:bg-white/25 `}
             />
           </div>
         </div>
@@ -46,18 +61,30 @@ export default function PersonalCard() {
         {/* ACTIONS */}
         <div className="flex items-center gap-1">
 
-          <button className="h-9 w-9 rounded-lg bg-white/20 
-                             hover:bg-white/30 transition flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg"
-              width="16" height="16" viewBox="0 0 24 24"
-              fill="none" stroke="white"
-              strokeWidth="2" strokeLinecap="round"
-              strokeLinejoin="round">
+          <button onClick={() => isEditingBalance(prev => !prev)}
+          className={`editedBalance ${editedBalance? "hidden" : "flex"} h-9 w-9 rounded-lg bg-white/20 hover:bg-white/30 transition  items-center justify-center`}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+              viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"
+              strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path
-                d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"
-              />
+                d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z">
+              </path>
             </svg>
           </button>
+          <div className={`${editedBalance? "flex" : "hidden"} flex-row items-center gap-1.5`}>
+            <button onClick={() => {
+              isEditingBalance(false)
+              setBalance(Number(localBalance))
+            }}
+            className="editYes border-none h-9 w-9 rounded-lg bg-white/20 hover:bg-white/30 transition flex items-center justify-center text-white">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+            </button>
+            <button onClick={() => isEditingBalance(false)}
+            className="editNo border-none h-9 w-9 rounded-lg bg-white/20 hover:bg-white/30 transition flex items-center justify-center text-white">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+            </button>
+          </div>
+
         </div>
       </div>
 
