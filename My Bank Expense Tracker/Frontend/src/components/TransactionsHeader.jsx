@@ -3,12 +3,7 @@ import { useAccount } from "../context/ExpenseContext";
 
 export default function TransactionsHeader() {
 
-  const [search, setSearch] = useState("");
-  const [filterType, setFilterType] = useState("all");
-  const [category, setCategory] = useState("all");
-
-  const {transactions} = useAccount();
-
+  const {transactions, filters, setFilters } = useAccount();
   return (
     <div className="mt-10">
 
@@ -35,8 +30,9 @@ export default function TransactionsHeader() {
           <input
             type="text"
             placeholder="Search transaction..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) =>
+              setFilters(prev => ({ ...prev, search: e.target.value }))
+            }
             className="
               w-md h-9
               rounded-lg
@@ -83,13 +79,15 @@ export default function TransactionsHeader() {
           {["all", "upi only", "cash only", "reviewed", "pending"].map(type => (
             <button
               key={type}
-              onClick={() => setFilterType(type)}
+              onClick={() =>
+                setFilters(prev => ({ ...prev, type: type }))
+              }
               className={`
                 border border-black/10
                 rounded-lg px-3 py-1
                 text-sm capitalize
                 transition duration-400 ease-in-out hover:scale-102 h-full font-medium
-                ${filterType === type
+                ${filters.type === type
                   ? "bg-black text-white"
                   : "bg-white hover:bg-slate-100"}
               `}
@@ -107,8 +105,9 @@ export default function TransactionsHeader() {
             </span>
 
             <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              onChange={(e) =>
+                setFilters(prev => ({ ...prev, category: e.target.value }))
+              }              
               className="text-sm
                          border border-black/10
                          rounded-lg bg-gray-100 py-2 px-3 outline-0"

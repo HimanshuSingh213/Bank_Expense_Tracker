@@ -217,7 +217,7 @@ export default function TransactionForm() {
         </div>
 
         {/* PART 5 */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 pointer-events-none">
 
           <input
             type="checkbox"

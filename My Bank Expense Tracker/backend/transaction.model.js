@@ -2,14 +2,14 @@ import mongoose from 'mongoose';
 
 const transactionSchema = new mongoose.Schema({
     userId: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "userInfo",
         required: true
     },
 
     accountId: {
-        // type: mongoose.Schema.Types.ObjectId,
-        // ref: "accountInfo",
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "accountInfo",
         required: true,
     },
 
@@ -52,12 +52,12 @@ const transactionSchema = new mongoose.Schema({
     },
     date: {
         type: String,
-        default: () =>
+        default: () => (
             new Date().toLocaleDateString("en-IN", {
                 day: "numeric",
                 month: "short",
                 year: "numeric",
-            }),
+            }))
     },
 
 }, { timestamps: true });

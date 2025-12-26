@@ -3,10 +3,9 @@ import express from "express";
 import mongoose from 'mongoose';
 import cors from "cors";
 
-
-import { userInfo } from './user.model.js';
 import { transaction } from './transaction.model.js';
 import { accountInfo } from "./account.model.js";
+import { userInfo } from "./user.model.js";
 
 const app = express()
 const port = process.env.PORT || 5000;
@@ -19,6 +18,10 @@ app.use(cors({
 
 app.use(express.json());
 
+// Temporary object Id 
+const TEMP_USER = new mongoose.Types.ObjectId("6947e733c2c118727b747f12");
+const TEMP_ACCOUNT = new mongoose.Types.ObjectId("6947e721c2c118727b747f0f");
+
 // DB connection
 mongoose
     .connect(process.env.MONGO_URI)
@@ -27,13 +30,15 @@ mongoose
 
 
 // Get all accounts of a user
-app.get("/api/accounts/:userId", async (req, res) => {
-    const accounts = await accountInfo.find({ userId: req.params.userId });
+app.get("/api/accounts", async (req, res) => {
+    const accounts = await accountInfo.find({
+        userId: TEMP_USER
+    });
     res.json(accounts);
 })
 
 // Set Balance with the CSV Import 
-app.patch("/api/accounts/:accountId/balance", async (req, res) => {
+app.patch("/api/accounts/balance", async (req, res) => {
     try {
 
         const { balance } = req.body;
@@ -42,8 +47,8 @@ app.patch("/api/accounts/:accountId/balance", async (req, res) => {
             return res.status(400).json({ message: "Balance must be a number" });
         }
 
-        const account = await accountInfo.findOneAndUpdate(
-            { accountId: req.params.accountId },
+        const account = await accountInfo.findByIdAndUpdate(
+            TEMP_ACCOUNT,
             {
                 currentBalance: balance,
                 lastSyncedAt: new Date(),
@@ -59,11 +64,9 @@ app.patch("/api/accounts/:accountId/balance", async (req, res) => {
 });
 
 // Get single account (for balance)
-app.get("/api/accounts/account/:accountId", async (req, res) => {
+app.get("/api/accounts/account", async (req, res) => {
     try {
-        const account = await accountInfo.findOne({
-            accountId: req.params.accountId
-        });
+        const account = await accountInfo.findById(TEMP_ACCOUNT);
 
         if (!account) {
             return res.status(404).json({ message: "Account not found" });
@@ -77,12 +80,25 @@ app.get("/api/accounts/account/:accountId", async (req, res) => {
     }
 });
 
+// Get logged-in user info
+app.get("/api/me", async (req, res) => {
+    try {
+        const user = await userInfo.findById(TEMP_USER).select("name email");
+        res.json(user);
+    } catch (err) {
+        res.status(500).json({ message: "Failed to fetch user info" });
+    }
+});
+
 
 //Transaction APIs
 
 // Get all Transactions of a user
-app.get("/api/transactions/:userId/:accountId", async (req, res) => {
-    const list = await transaction.find({ userId: req.params.userId, accountId: req.params.accountId })
+app.get("/api/transactions", async (req, res) => {
+    const list = await transaction.find({
+        userId: TEMP_USER,
+        accountId: TEMP_ACCOUNT
+    })
         .sort({ createdAt: -1 });
 
     res.json(list);
@@ -94,8 +110,8 @@ app.post("/api/transactions", async (req, res) => {
         console.log("Request Body: ", req.body);
 
         const newTransaction = new transaction({
-            userId: req.body.userId,
-            accountId: req.body.accountId,
+            userId: TEMP_USER,
+            accountId: TEMP_ACCOUNT,
             title: req.body.title,
             amount: Number(req.body.amount),
             isExpense: req.body.isExpense,
@@ -108,13 +124,14 @@ app.post("/api/transactions", async (req, res) => {
 
         const savedTransaction = await newTransaction.save();
 
-        const { amount, isExpense, accountId } = req.body;
+        const { amount, isExpense } = req.body;
         // update account balance with addition of every manually added transaction
         const change = isExpense ? -Number(amount) : Number(amount);
-        await accountInfo.findOneAndUpdate(
-            { accountId },
+        await accountInfo.findByIdAndUpdate(
+            TEMP_ACCOUNT,
             { $inc: { currentBalance: change } }
         );
+
 
         res.status(201).json(savedTransaction);
 
@@ -143,14 +160,9 @@ app.delete("/api/transactions/:id", async (req, res) => {
     if (!txn) return res.status(404).json({ message: "Transaction Not Found" });
 
     const change = txn.isExpense ? txn.amount : -txn.amount;
-    // await accountInfo.findByIdAndUpdate(txn.accountId, {
-    //     $inc: { currentBalance: change },
-    // });
-
-    await accountInfo.findOneAndUpdate(
-        { accountId: txn.accountId },
-        { $inc: { currentBalance: change } }
-    );
+    await accountInfo.findByIdAndUpdate(txn.accountId, {
+        $inc: { currentBalance: change },
+    });
 
     await txn.deleteOne();
     res.json({ success: true });

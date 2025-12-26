@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useMemo } from "react";
 
 const ExpenseContext = createContext(null);
 
@@ -8,8 +8,9 @@ export const useAccount = () => {
 
 export function ExpenseProvider({ children }) {
   const [theme, setTheme] = useState("light"); // "light" | "dark"
-  const [userId, setUserId] = useState("Himanshu");
-  const [accountId, setAccountId] = useState("SBI_MAIN_ACCOUNT");
+  const [bankName, setBankName] = useState("........");
+  const [accountType, setAccountType] = useState("........");
+  const [user, setUser] = useState(".........");
 
   // Transaction states
   const [transactions, setTransactions] = useState([]);
@@ -21,10 +22,52 @@ export function ExpenseProvider({ children }) {
   const [totalExpense, setTotalExpense] = useState(0);
   const [balance, setBalance] = useState(0);
 
+  // Transaction Detail Modal states
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [openDetail, setOpenDetail] = useState(false);
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  //Filter states
+  const [filters, setFilters] = useState({
+    search: "",
+    category: "all",
+    type: "all",        
+  });
+
+  const filteredTransactions = useMemo(
+    () => applyFilters(transactions, filters),
+    [transactions, filters]
+  );
+  
+  
+  function applyFilters(transactions, filters){
+    return transactions.filter(txn => {
+
+      // Search
+      if(filters.search){
+        const q = filters.search.toLowerCase();
+        if(!txn.title.toLowerCase().includes(q) && !txn.recipient?.toLowerCase().includes(q)) return false;
+      }
+
+      //Category
+      if (filters.category !== "all" && txn.category.toLowerCase() !== filters.category) return false;
+      
+
+      // type
+      if(filters.type === "reviewed" && !txn.reviewed) return false;
+      if(filters.type === "pending" && txn.reviewed) return false;
+
+      if(filters.type === "upi only" && !txn.isOnline) return false;
+      if(filters.type === "cash only" && txn.isOnline) return false;
+
+      return true;
+    });
+  }
 
   async function getUserTransactions() {
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/transactions/${userId}/${accountId}`)
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/transactions`)
       const finalData = await res.json();
       setTransactions(finalData);
 
@@ -38,20 +81,36 @@ export function ExpenseProvider({ children }) {
   }
   async function getBalance() {
     const res = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/accounts/account/${accountId}`
+      `${import.meta.env.VITE_BACKEND_URL}/api/accounts/account`
     );
     const data = await res.json();
     setBalance(data.currentBalance);
   }
 
-  useEffect(() => {
-    getBalance();
-  }, [accountId]);
+  async function getAccountInfo() {
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/accounts/account`);
+    const data = await res.json();
+    setBankName(data.bankName);
+    setAccountType(data.accountType);
+  }
+
+  async function getUserInfo() {
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/me`);
+    const data = await res.json();
+    setUser(data.name);
+  }
 
   useEffect(() => {
-    if (!accountId) return;
+    getUserInfo();
+  }, []);
+  
+  useEffect(() => {
+    getBalance();
+  }, []);
+
+  useEffect(() => {
     getUserTransactions();
-  }, [userId, accountId]);
+  }, []);
 
   useEffect(() => {
     let income = 0;
@@ -87,6 +146,7 @@ export function ExpenseProvider({ children }) {
     if (!ok) return;
     else {
       try {
+        setIsLoading(true);
         await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/transactions/${id}`, {
           method: "DELETE"
         })
@@ -96,6 +156,9 @@ export function ExpenseProvider({ children }) {
       }
       catch (err) {
         console.error("Failed to delete transaction:", err);
+      }
+      finally{
+        setIsLoading(false);
       }
 
     }
@@ -115,8 +178,6 @@ export function ExpenseProvider({ children }) {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 ...txn,
-                userId,
-                accountId,
               }),
             }
           );
@@ -138,8 +199,6 @@ export function ExpenseProvider({ children }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          userId,
-          accountId,
         }),
 
       });
@@ -194,11 +253,9 @@ export function ExpenseProvider({ children }) {
   const value = {
     theme,
     setTheme,
-    userId,
-    setUserId,
-    accountId,
     totalIncome,
     totalExpense,
+    user,
     balance,
     setTotalIncome,
     setTotalExpense,
@@ -212,6 +269,20 @@ export function ExpenseProvider({ children }) {
     importingTxn,
     getBalance, 
     calculatorTransactions,
+    bankName,
+    accountType,
+    getAccountInfo,
+    openDetail,
+    setOpenDetail,
+    selectedTransaction,
+    setSelectedTransaction,
+    applyFilters,
+    filters,
+    setFilters,
+    filteredTransactions,
+    isLoading,
+    setIsLoading,
+    
   };
 
   return (

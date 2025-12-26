@@ -3,7 +3,7 @@ import { useAccount } from "../context/ExpenseContext";
 
 export default function NavBar() {
 
-  const {theme, setTheme, userId} = useAccount ();
+  const {theme, setTheme, user} = useAccount ();
 
 
   return (
@@ -16,7 +16,7 @@ export default function NavBar() {
         </p>
 
         <p className="text-slate-600 mt-2">
-          Good Morning, {userId} 👋
+          Good Morning, {user} 👋
         </p>
       </div>
 

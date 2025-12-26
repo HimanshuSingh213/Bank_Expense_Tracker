@@ -2,11 +2,12 @@ import { useAccount } from "../context/ExpenseContext";
 import TransactionItem from "./TransactionItem";
 
 export default function TransactionsList() {
-  const { transactions } = useAccount();
+  const { filteredTransactions  } = useAccount();
+  
   return (
     <div className="mt-4 space-y-3">
 
-      {transactions.map((transaction) => (
+      {filteredTransactions.map((transaction) => (
 
         <TransactionItem
           key={transaction._id}

@@ -3,17 +3,45 @@ import { useAccount } from "../context/ExpenseContext";
 import { useRef, useEffect, useState } from "react";
 
 export default function PersonalCard() {
-  const { balance, setBalance} = useAccount();
+  const { balance, setBalance, bankName, accountType, getAccountInfo, setIsLoading, isLoading } = useAccount();
   
   const [editedBalance, isEditingBalance] = useState(false);
   const [localBalance, setLocalBalance] = useState(balance);
   const inputRef = useRef(null);
 
   useEffect(() => {
+    getAccountInfo();
+  }, []);
+
+  useEffect(() => {
     if (editedBalance) {
       inputRef.current?.focus();
     }
   }, [editedBalance]); 
+
+  useEffect(() => {
+    if (editedBalance) {
+      setLocalBalance(balance);
+    }
+  }, [editedBalance, balance]);
+
+  async function setDBBalance(){
+    setIsLoading(true);
+    try{
+    await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/accounts/balance`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          balance: Number(localBalance),
+        }),
+      })
+    }
+    finally{
+      setIsLoading(false);
+    }
+  }
 
   return (
     <div className="bg-linear-to-br from-[#ad46ff] via-[#f6339a] to-[#ff6900]
@@ -49,6 +77,7 @@ export default function PersonalCard() {
               type="number"
               ref={inputRef}
               value={localBalance}
+              disabled={isLoading}
               onChange={(e) => setLocalBalance(e.target.value)}
               inputMode="numeric" pattern="[0-9]*"
               className= {` ${editedBalance? "flex" : "hidden"} mt-1 h-8 w-[90%] 
@@ -72,14 +101,20 @@ export default function PersonalCard() {
             </svg>
           </button>
           <div className={`${editedBalance? "flex" : "hidden"} flex-row items-center gap-1.5`}>
-            <button onClick={() => {
+            <button onClick={async () => {
               isEditingBalance(false)
               setBalance(Number(localBalance))
+              setDBBalance()
             }}
+            disabled={isLoading}
             className="editYes border-none h-9 w-9 rounded-lg bg-white/20 hover:bg-white/30 transition flex items-center justify-center text-white">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
             </button>
-            <button onClick={() => isEditingBalance(false)}
+            <button onClick={() => {
+              setLocalBalance(balance)
+              isEditingBalance(false)
+            }}
+            disabled={isLoading}
             className="editNo border-none h-9 w-9 rounded-lg bg-white/20 hover:bg-white/30 transition flex items-center justify-center text-white">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
             </button>
@@ -94,12 +129,12 @@ export default function PersonalCard() {
 
         <div className="bg-white/20 rounded-xl p-3 min-w-[47%]">
           <p className="text-xs text-white/70">Bank Name</p>
-          <h2 className="text-sm text-white">My SBI Account</h2>
+          <h2 className="text-sm text-white">{bankName}</h2>
         </div>
 
         <div className="bg-white/20 rounded-xl p-3 min-w-[47%]">
           <p className="text-xs text-white/70">Account Type</p>
-          <h2 className="text-sm text-white">Savings</h2>
+          <h2 className="text-sm text-white">{accountType}</h2>
         </div>
 
       </div>
