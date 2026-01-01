@@ -1,7 +1,7 @@
 import React from "react";
 import { useAccount } from "./context/ExpenseContext";
 import NavBar from "./components/NavBar";
-import PersonalCard from "./components/PersonalCard";
+import PersonalCard from "./components/personalCard";
 import ImportCsv from "./components/ImportCsv";
 import TransactionForm from "./components/TransactionForm";
 import StatsSection from "./components/StatsSection";
