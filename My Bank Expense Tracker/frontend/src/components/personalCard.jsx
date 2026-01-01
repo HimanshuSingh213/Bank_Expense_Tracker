@@ -71,7 +71,7 @@ export default function PersonalCard() {
           {/* BALANCE */}
           <div>
             <p className="text-sm text-white/80">Available balance</p>
-            <h2 className={`${editedBalance? "hidden" : "flex"} text-base text-white`}>₹{balance}</h2>
+            <h2 className={`${editedBalance? "hidden" : "flex"} text-base text-white`}>₹{balance.toFixed(2)}</h2>
 
             <input 
               type="number"

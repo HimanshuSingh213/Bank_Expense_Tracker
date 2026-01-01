@@ -91,7 +91,7 @@ function TransactionDetail() {
                         {/* Section-2 */}
                         <div className='bg-gray-50 rounded-lg p-4'>
                             <div className='flex gap-2 items-center justify-start mb-2'>
-                                <svg class=" h-4 w-4 text-blue-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" x2="22" y1="10" y2="10"></line></svg>
+                                <svg className=" h-4 w-4 text-blue-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" x2="22" y1="10" y2="10"></line></svg>
                                 <h2 className='font-medium text-sm'>Payment Method</h2>
                             </div>
                             <h2 className='text-gray-900'>{selectedTransaction.isOnline ? "Online Payment (UPI)" : "Cash"}</h2>

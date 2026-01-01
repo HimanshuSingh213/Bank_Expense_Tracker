@@ -113,7 +113,7 @@ export default function ImportCSV() {
     function formatDate(sbiDate) {
       if (!sbiDate) return "";
 
-      const [dd, mm, yyyy] = sbiDate.split("/");
+      const [dd, mm, yyyy] = sbiDate.split("-");
 
       const day = String(Number(dd));
       const months = [
@@ -195,7 +195,7 @@ export default function ImportCSV() {
       if (text.includes("PAYTM")) return "Paytm";
       if (text.includes("PHONEPE")) return "PhonePe";
       if (text.includes("BHIM")) return "BHIM";
-      if(text.includes("INTERES T CREDIT")) return "INTEREST CREDIT";
+      if(text.includes("INTERES")) return "Interest Payment";
 
       // UPI 
       if (text.includes("UPI")) {
@@ -223,7 +223,7 @@ export default function ImportCSV() {
 
     function extractPartyName(description = "") {
       if (!description) return "Unknown";
-      if(description.includes("INTERES T CREDIT")) return "INTEREST CREDIT";
+      if(description.includes("INTERES")) return "INTEREST CREDIT";
 
       const clean = description
         .replace(/\u00A0/g, " ")

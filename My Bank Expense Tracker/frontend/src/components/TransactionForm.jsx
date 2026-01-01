@@ -217,7 +217,7 @@ export default function TransactionForm() {
         </div>
 
         {/* PART 5 */}
-        <div className="flex items-center gap-2 pointer-events-none">
+        <div className="flex items-center gap-2">
 
           <input
             type="checkbox"
@@ -228,7 +228,7 @@ export default function TransactionForm() {
             className="accent-indigo-500"
           />
 
-          <label htmlFor="isOnline" className="text-sm font-medium text-gray-800">
+          <label htmlFor="isOnline" className="text-sm font-medium text-gray-800 pointer-events-auto">
             Online (UPI)
           </label>
 
