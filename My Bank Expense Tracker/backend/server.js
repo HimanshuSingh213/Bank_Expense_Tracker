@@ -2,6 +2,7 @@ import 'dotenv/config'
 import express from "express";
 import mongoose from 'mongoose';
 import cors from "cors";
+import helmet from "helmet";
 
 import { transaction } from './transaction.model.js';
 import { accountInfo } from "./account.model.js";
@@ -14,6 +15,19 @@ const port = process.env.PORT || 5000;
 app.use(cors({
     origin: process.env.ORIGIN,
     credentials: true,
+}));
+
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            "default-src": ["'self'"],
+            "script-src": ["'self'", "'unsafe-inline'"],
+            "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            "font-src": ["'self'", "https://fonts.gstatic.com"],
+            "img-src": ["'self'", "data:"],
+            "connect-src": ["'self'", process.env.ORIGIN],
+        },
+    },
 }));
 
 app.use(express.json());
