@@ -9,14 +9,18 @@ import CalculatorPanel from "./components/CalculatorPanel";
 import TransactionsHeader from "./components/TransactionsHeader";
 import TransactionsList from "./components/TransactionsList";
 import TransactionDetail from "./components/TransactionDetail";
+import TransactionUpdateModal from "./components/TransactionUpdateModal";
 import LoadingState from "./components/LoadingState";
+
 function App() {
-  const { openDetail, loading, importingTxn, isLoading } = useAccount();
+  const { openDetail, loading, importingTxn, isLoading, openUpdate } = useAccount();
   return (
     <div>
       {openDetail && <TransactionDetail />}
       {(loading || importingTxn) && <LoadingState message="Fetching transactions..." />}
       {isLoading && <LoadingState message="Syncing data..." />}
+
+      {openUpdate && <TransactionUpdateModal/>}
 
       <div className="min-h-screen bg-linear-to-br from-indigo-500 via-purple-500 to-sky-400 flex justify-center px-4 py-6">
         <div className="w-full max-w-6xl bg-[#fffffff2] rounded-2xl shadow-2xl p-5 md:p-7 lg:py-7.5 lg:px-5">

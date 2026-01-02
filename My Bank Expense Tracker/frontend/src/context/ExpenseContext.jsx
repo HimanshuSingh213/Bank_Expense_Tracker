@@ -28,6 +28,11 @@ export function ExpenseProvider({ children }) {
 
   const [isLoading, setIsLoading] = useState(false);
 
+  // Transaction Update modal states
+  const [toUpdate, setToUpdate] = useState(null);
+  const [openUpdate, setOpenUpdate] = useState(false);
+
+
   //Filter states
   const [filters, setFilters] = useState({
     search: "",
@@ -282,6 +287,10 @@ export function ExpenseProvider({ children }) {
     filteredTransactions,
     isLoading,
     setIsLoading,
+    toUpdate,
+    setToUpdate,
+    openUpdate,
+    setOpenUpdate,
     
   };
 

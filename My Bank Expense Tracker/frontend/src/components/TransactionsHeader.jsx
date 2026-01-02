@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAccount } from "../context/ExpenseContext";
+import SelectInput from "./SelectInput";
 
 export default function TransactionsHeader() {
 
@@ -104,6 +105,13 @@ export default function TransactionsHeader() {
               Category:
             </span>
 
+            {/* <SelectInput
+             options={categoryOptions}
+             value={inputStates.category}
+             onChange={(e) =>
+              setFilters(prev => ({ ...prev, category: e.target.value }))
+            } 
+            /> */}
             <select
               onChange={(e) =>
                 setFilters(prev => ({ ...prev, category: e.target.value }))

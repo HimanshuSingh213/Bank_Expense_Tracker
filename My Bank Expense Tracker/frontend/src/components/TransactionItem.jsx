@@ -14,22 +14,36 @@ export default function TransactionItem({
   checked2,
 }) {
 
-  const { toggleReviewed, toggleCalculator, deleteTransaction, setOpenDetail, setSelectedTransaction } = useAccount();
+  const { toggleReviewed, toggleCalculator, deleteTransaction, setOpenDetail, setSelectedTransaction, setToUpdate, setOpenUpdate } = useAccount();
 
   function handleOpenDetail() {
-      setSelectedTransaction({
-          id,
-          title,
-          category,
-          date,
-          amount,
-          recipient,
-          isExpense,
-          isOnline,
-          hasDescription,
-          checked1
-      });
-      setOpenDetail(true);
+    setSelectedTransaction({
+      id,
+      title,
+      category,
+      date,
+      amount,
+      recipient,
+      isExpense,
+      isOnline,
+      hasDescription,
+      checked1
+    });
+    setOpenDetail(true);
+  }
+
+  function handleUpdateDetail() {
+    setToUpdate({
+      id,
+      title,
+      category,
+      amount,
+      recipient,
+      isExpense,
+      isOnline,
+      hasDescription,
+    });
+    setOpenUpdate(true);
   }
 
 
@@ -60,8 +74,8 @@ export default function TransactionItem({
         <div className="flex gap-2 items-center justify-center">
           <button onClick={(e) => {
             e.stopPropagation()
-          toggleReviewed(id, checked1)
-        }}
+            toggleReviewed(id, checked1)
+          }}
             className={`checkbox1 size-4 border shadow-sm rounded-sm transition duration-300 ease-in-out flex items-center justify-center cursor-pointer ${checked1 ? "bg-[#030213] text-white border-[#030213]" : "border-black/90 bg-white"}`}>
             <svg className={`${checked1 ? "block" : "hidden"}`}
               xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
@@ -154,9 +168,10 @@ export default function TransactionItem({
 
 
           <button onClick={(e) => {
-             e.stopPropagation()
+            e.stopPropagation()
+            handleUpdateDetail()
           }}
-          className="flex items-center justify-center text-sm size-8  rounded-md hover:scale-110 transition duration-300 ease-in-out hover:bg-blue-100">
+            className="flex items-center justify-center text-sm size-8  rounded-md hover:scale-110 transition duration-300 ease-in-out hover:bg-blue-100">
             <svg className="size-4 text-blue-600"
               xmlns="http://www.w3.org/2000/svg" width="16" height="16"
               viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
@@ -168,7 +183,7 @@ export default function TransactionItem({
           </button>
 
           <button onClick={(e) => {
-             e.stopPropagation()
+            e.stopPropagation()
             deleteTransaction(id)
           }}
             className="flex items-center justify-center text-sm size-8 rounded-md hover:scale-110 transition duration-300 ease-in-out hover:bg-red-100">
@@ -186,7 +201,7 @@ export default function TransactionItem({
 
         </div>
       </div>
-     
+
     </div>
 
   );
