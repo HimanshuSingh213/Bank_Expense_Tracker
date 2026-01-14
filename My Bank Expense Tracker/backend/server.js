@@ -167,6 +167,29 @@ app.patch("/api/transactions/:id", async (req, res) => {
     res.json(updated);
 });
 
+app.patch("/api/transactions/:id", async (req, res) => {
+    try {
+      const updated = await transaction.findByIdAndUpdate(
+        req.params.id,
+        { $set: req.body },
+        {
+          new: true,
+          runValidators: true,
+        }
+      );
+  
+      if (!updated) {
+        return res.status(404).json({ message: "Transaction not found" });
+      }
+  
+      res.json(updated);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+  
+
 // Delete transaction manually
 app.delete("/api/transactions/:id", async (req, res) => {
     const txn = await transaction.findById(req.params.id);

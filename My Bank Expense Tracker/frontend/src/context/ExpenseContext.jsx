@@ -31,40 +31,40 @@ export function ExpenseProvider({ children }) {
   // Transaction Update modal states
   const [toUpdate, setToUpdate] = useState(null);
   const [openUpdate, setOpenUpdate] = useState(false);
-
+  const [isUpdating, setIsUpdating] = useState(false);
 
   //Filter states
   const [filters, setFilters] = useState({
     search: "",
     category: "all",
-    type: "all",        
+    type: "all",
   });
 
   const filteredTransactions = useMemo(
     () => applyFilters(transactions, filters),
     [transactions, filters]
   );
-  
-  
-  function applyFilters(transactions, filters){
+
+
+  function applyFilters(transactions, filters) {
     return transactions.filter(txn => {
 
       // Search
-      if(filters.search){
+      if (filters.search) {
         const q = filters.search.toLowerCase();
-        if(!txn.title.toLowerCase().includes(q) && !txn.recipient?.toLowerCase().includes(q)) return false;
+        if (!txn.title.toLowerCase().includes(q) && !txn.recipient?.toLowerCase().includes(q)) return false;
       }
 
       //Category
       if (filters.category !== "all" && txn.category.toLowerCase() !== filters.category) return false;
-      
+
 
       // type
-      if(filters.type === "reviewed" && !txn.reviewed) return false;
-      if(filters.type === "pending" && txn.reviewed) return false;
+      if (filters.type === "reviewed" && !txn.reviewed) return false;
+      if (filters.type === "pending" && txn.reviewed) return false;
 
-      if(filters.type === "upi only" && !txn.isOnline) return false;
-      if(filters.type === "cash only" && txn.isOnline) return false;
+      if (filters.type === "upi only" && !txn.isOnline) return false;
+      if (filters.type === "cash only" && txn.isOnline) return false;
 
       return true;
     });
@@ -108,14 +108,14 @@ export function ExpenseProvider({ children }) {
   useEffect(() => {
     getUserInfo();
   }, []);
-  
+
   useEffect(() => {
     getBalance();
   }, []);
 
   useEffect(() => {
     getUserTransactions();
-  }, []);
+  }, [isUpdating]);
 
   useEffect(() => {
     let income = 0;
@@ -162,7 +162,7 @@ export function ExpenseProvider({ children }) {
       catch (err) {
         console.error("Failed to delete transaction:", err);
       }
-      finally{
+      finally {
         setIsLoading(false);
       }
 
@@ -223,6 +223,7 @@ export function ExpenseProvider({ children }) {
 
   async function updateTransaction(id, updates) {
     try {
+      setIsUpdating(true)
       const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/transactions/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -230,12 +231,19 @@ export function ExpenseProvider({ children }) {
       })
 
       const updated = await res.json();
+
       setTransactions(prev =>
-        prev.map(transaction => transaction._id === updated._id ? updated : transaction)
+        prev.map(transaction => 
+          transaction._id === updated._id ? updated : transaction
+        )
+
       );
     }
     catch (err) {
       console.error("Failed to update transaction:", err);
+    }
+    finally {
+      setIsUpdating(false)
     }
   }
 
@@ -268,11 +276,12 @@ export function ExpenseProvider({ children }) {
     transactions,
     loading,
     addTransaction,
+    updateTransaction,
     toggleReviewed,
     toggleCalculator,
     deleteTransaction,
     importingTxn,
-    getBalance, 
+    getBalance,
     calculatorTransactions,
     bankName,
     accountType,
@@ -291,7 +300,7 @@ export function ExpenseProvider({ children }) {
     setToUpdate,
     openUpdate,
     setOpenUpdate,
-    
+
   };
 
   return (

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import SelectInput from './SelectInput';
 
 function TransactionUpdateModal() {
-    const { openUpdate, toUpdate, setOpenUpdate } = useAccount();
+    const { openUpdate, toUpdate, setOpenUpdate, updateTransaction } = useAccount();
 
     const typeOptions = ["Expense", "Income"];
     const categoryOptions = ["Food", "Travel", "Shopping", "Bills", "Others"];
@@ -16,7 +16,7 @@ function TransactionUpdateModal() {
         recipient: "",
         isExpense: true,
         category: "",
-        hasDescription: "",
+        description: "",
         isOnline: false,
     });
 
@@ -28,31 +28,41 @@ function TransactionUpdateModal() {
                 recipient: toUpdate.recipient || "",
                 isExpense: toUpdate.isExpense,
                 category: toUpdate.category || "",
-                hasDescription: toUpdate.hasDescription || "",
+                description: toUpdate.hasDescription || "",
                 isOnline: toUpdate.isOnline
 
             });
         }
     }, [openUpdate, toUpdate]);
 
+    // async function handleSave() {
+    //     setLoading(true);
+    //     try {
+    //         await fetch(
+    //             `${import.meta.env.VITE_BACKEND_URL}/api/transactions/${toUpdate.id}`,
+    //             {
+    //                 method: "PATCH",
+    //                 headers: { "Content-Type": "application/json" },
+    //                 body: JSON.stringify(inputStates),
+    //             }
+    //         );
+    //     }
+    //     catch (err) {
+    //         alert("Error Saving the changes, Please try again.")
+    //         console.log("Error: ", err);
+    //     }
+    //     finally {
+    //         setLoading(false)
+    //         setOpenUpdate(false);
+    //     }
+    // }
     async function handleSave() {
-        setLoading(true);
         try {
-            await fetch(
-                `${import.meta.env.VITE_BACKEND_URL}/api/transactions/${toUpdate.id}`,
-                {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(inputStates),
-                }
-            );
-        }
-        catch (err) {
-            alert("Error Saving the changes, Please try again.")
-            console.log("Error: ", err);
+            setLoading(true);
+            await updateTransaction(toUpdate.id, inputStates);
         }
         finally {
-            setLoading(false)
+            setLoading(false);
             setOpenUpdate(false);
         }
     }
@@ -166,8 +176,8 @@ function TransactionUpdateModal() {
                         {/* Section-4 */}
                         <div className='w-full flex gap-0.5 items-start flex-col justify-center h-full'>
                             <label htmlFor='description' className='w-full text-sm font-medium'>Description (Optional)</label>
-                            <textarea value={inputStates.hasDescription ? inputStates.hasDescription : ""}
-                                onChange={(e) => setInputStates(prev => ({ ...prev, hasDescription: e.target.value }))}
+                            <textarea value={inputStates.description}
+                                onChange={(e) => setInputStates(prev => ({ ...prev, description: e.target.value }))}
                                 id='description' className='w-full rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-700 outline-none focus:ring-2 ring-gray-400 transition-all min-h-20 resize-none' placeholder='Add notes or Detail About this Transaction...'
                                 type="text" />
                         </div>
@@ -202,14 +212,14 @@ function TransactionUpdateModal() {
                                 <p className='text-sm'>{loading ? "Saving..." : "Save Changes"}</p>
                             </button>
                             <div onClick={() => handleClose()}
-                                className={`flex gap-2 items-center flex-row justify-center rounded-lg border hover:shadow-sm border-gray-300 bg-white hover:bg-pink-50 hover:border-pink-500 transition-all duration-200 ease-in-out p-2 ${loading ? "opacity-50 cursor-not-allowed": ""}`}>
-                            <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-                            <p className='text-sm'>Cancel</p>
+                                className={`flex gap-2 items-center flex-row justify-center rounded-lg border hover:shadow-sm border-gray-300 bg-white hover:bg-pink-50 hover:border-pink-500 transition-all duration-200 ease-in-out p-2 ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
+                                <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                                <p className='text-sm'>Cancel</p>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </div >
             </div >
-        </div >
         </>
 
     )
