@@ -109,13 +109,18 @@ app.get("/api/me", async (req, res) => {
 
 // Get all Transactions of a user
 app.get("/api/transactions", async (req, res) => {
-    const list = await transaction.find({
-        userId: TEMP_USER,
-        accountId: TEMP_ACCOUNT
-    })
-        .sort({ createdAt: -1 });
+    try {
+        const list = await transaction.find({
+            userId: TEMP_USER,
+            accountId: TEMP_ACCOUNT
+        })
+            .sort({ createdAt: -1 });
 
-    res.json(list);
+        res.json(list);
+    } catch (err) {
+        console.error("Failed to fetch transactions:", err);
+        res.status(500).json({ message: "Failed to fetch transactions" });
+    }
 });
 
 // Add Transaction to DB
@@ -158,36 +163,26 @@ app.post("/api/transactions", async (req, res) => {
 
 // Update Transactions manually
 app.patch("/api/transactions/:id", async (req, res) => {
-    const updated = await transaction.findByIdAndUpdate(
-        req.params.id,
-        req.body,
-        { new: true }
-    );
-
-    res.json(updated);
-});
-
-app.patch("/api/transactions/:id", async (req, res) => {
     try {
-      const updated = await transaction.findByIdAndUpdate(
-        req.params.id,
-        { $set: req.body },
-        {
-          new: true,
-          runValidators: true,
+        const updated = await transaction.findByIdAndUpdate(
+            req.params.id,
+            { $set: req.body },
+            {
+                new: true,
+                runValidators: true,
+            }
+        );
+
+        if (!updated) {
+            return res.status(404).json({ message: "Transaction not found" });
         }
-      );
-  
-      if (!updated) {
-        return res.status(404).json({ message: "Transaction not found" });
-      }
-  
-      res.json(updated);
+
+        res.json(updated);
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: err.message });
+        console.error("Transaction update error:", err);
+        res.status(500).json({ error: err.message });
     }
-  });
+});
   
 
 // Delete transaction manually

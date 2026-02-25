@@ -7,6 +7,7 @@ export const useAccount = () => {
 };
 
 export function ExpenseProvider({ children }) {
+  
   const [theme, setTheme] = useState("light"); // "light" | "dark"
   const [bankName, setBankName] = useState("........");
   const [accountType, setAccountType] = useState("........");
