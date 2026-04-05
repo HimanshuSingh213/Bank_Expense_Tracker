@@ -112,19 +112,29 @@ export default function ImportCSV() {
 
     function formatDate(sbiDate) {
       if (!sbiDate) return "";
-
+    
       const parts = sbiDate.trim().split(/[-/]/);
+      
       if (parts.length !== 3) return "";
-
-      const [dd, mm, yyyy] = parts;
-
+    
+      let [dd, mm, yyyy] = parts;
+    
       const day = String(Number(dd));
+      
       const months = [
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
       ];
-      const month = months[Number(mm) - 1];
-
+      
+      const monthIndex = Number(mm) - 1;
+      const month = months[monthIndex];
+    
+      if (!month) return "";
+    
+      if (yyyy.length === 2) {
+        yyyy = "20" + yyyy;
+      }
+    
       return `${day} ${month} ${yyyy}`;
     }
 
