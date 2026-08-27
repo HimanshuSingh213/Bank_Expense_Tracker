@@ -4,62 +4,66 @@ const transactionSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "userInfo",
-        required: true
+        required: false,
+        index: true
     },
-
     accountId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "accountInfo",
-        required: true,
+        required: false,
+        index: true
     },
-
     title: {
         type: String,
-        required: true
+        required: true,
+        trim: true
     },
     amount: {
         type: Number,
-        required: true
+        required: true,
+        min: 0
     },
-
     isExpense: {
         type: Boolean,
-        required: true
+        required: true,
+        default: true
     },
     category: {
         type: String,
-        required: true
+        required: true,
+        default: "Others"
     },
-
     recipient: {
-        type: String
+        type: String,
+        default: "",
+        trim: true
     },
     description: {
-        type: String
+        type: String,
+        default: "",
+        trim: true
     },
     isOnline: {
         type: Boolean,
         default: false
     },
-
     reviewed: {
         type: Boolean,
         default: false
     },
-    inCalculator: {
-        type: Boolean,
-        default: false
+    balance: {
+        type: Number
     },
     date: {
-        type: String,
-        default: () => (
-            new Date().toLocaleDateString("en-IN", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-            }))
+        type: mongoose.Schema.Types.Mixed,
+        default: Date.now,
+        index: true
     },
-
 }, { timestamps: true });
 
-export const transaction = mongoose.model('transaction', transactionSchema)
+transactionSchema.index({ date: -1 });
+transactionSchema.index({ createdAt: -1 });
+
+export const transaction = mongoose.model('transaction', transactionSchema);
+
+

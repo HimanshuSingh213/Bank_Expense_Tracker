@@ -4,7 +4,8 @@ const accountSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "userInfo",
-    required: true
+    required: true,
+    index: true
   },
 
   accountId: {
@@ -15,12 +16,26 @@ const accountSchema = new mongoose.Schema({
 
   bankName: {
     type: String,
-    required: true,
+    default: "State Bank of India",
+    trim: true
   },
 
   accountType: {
     type: String,
-    required: true,
+    default: "Savings Account",
+    trim: true
+  },
+
+  accountNumber: {
+    type: String,
+    default: "",
+    trim: true
+  },
+
+  parserPreset: {
+    type: String,
+    default: "sbi",
+    trim: true
   },
 
   currentBalance: {
@@ -28,7 +43,12 @@ const accountSchema = new mongoose.Schema({
     default: 0
   },
 
-  lastSyncedAt: Date,
+  lastSyncedAt: {
+    type: Date,
+    default: Date.now
+  }
 }, { timestamps: true });
 
-export const accountInfo = mongoose.model('accountInfo', accountSchema)
+
+export const accountInfo = mongoose.model('accountInfo', accountSchema);
+

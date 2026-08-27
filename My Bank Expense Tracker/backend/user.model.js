@@ -3,19 +3,19 @@ import mongoose from 'mongoose';
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true,
+    default: "Himanshu Singh",
+    trim: true,
   },
   email: {
     type: String,
-    required: true,
-    unique: true
+    default: "personal@expense.local",
+    trim: true,
   },
   provider: {
     type: String,
-    required: true,
+    default: "local",
   },
-
 }, { timestamps: true });
 
+export const userInfo = mongoose.model('userInfo', userSchema);
 
-export const userInfo = mongoose.model('userInfo', userSchema)

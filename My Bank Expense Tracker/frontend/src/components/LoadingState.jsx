@@ -2,21 +2,16 @@ import React from "react";
 
 function LoadingState({ message = "Loading..." }) {
   return (
-    <div className="fixed inset-0 z-10001 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      
-      <div className="
-        flex flex-col items-center gap-4 bg-white dark:bg-neutral-900 rounded-xl px-6 py-5 shadow-xl">
-        {/* Spinner */}
-        <div className=" h-10 w-10 rounded-full border-4 border-gray-300 border-t-black animate-spin dark:border-neutral-700 dark:border-t-white" />
-
-        {/* Text */}
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs">
+      <div className="flex flex-col items-center gap-3 bg-white border border-slate-200 rounded-2xl px-6 py-5 shadow-xl">
+        <div className="h-7 w-7 rounded-full border-2 border-slate-200 border-t-slate-800 animate-spin" />
+        <p className="text-xs font-semibold text-slate-800">
           {message}
         </p>
       </div>
-
     </div>
   );
 }
+
 
 export default LoadingState;
