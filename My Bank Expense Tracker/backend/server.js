@@ -11,17 +11,55 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import helmet from 'helmet';
 import jwt from 'jsonwebtoken';
+import rateLimit from 'express-rate-limit';
 
 import { transaction } from './transaction.model.js';
 import { accountInfo } from './account.model.js';
 import { userInfo } from './user.model.js';
 import oc from 'officecrypto-tool';
 import * as XLSX from 'xlsx';
+import { fingerprintOf, findDuplicateIn } from './statementCore.js';
 
 const app = express();
 const port = process.env.PORT || 8000;
-const ACCESS_PIN = process.env.ACCESS_PIN || '6169';
-const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_bank_expense_tracker_jwt_key_2026';
+
+// Fail fast if required secrets are missing (no hardcoded fallbacks)
+if (!process.env.ACCESS_PIN) {
+  console.error('FATAL: ACCESS_PIN is not set in .env — refusing to start without an access PIN.');
+  process.exit(1);
+}
+if (!process.env.JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET is not set in .env — refusing to start with an unsigned secret.');
+  process.exit(1);
+}
+const ACCESS_PIN = String(process.env.ACCESS_PIN).trim();
+const JWT_SECRET = process.env.JWT_SECRET;
+
+// Behind a proxy (Render/Railway/nginx), this is needed so rate limiting
+// sees the real client IP instead of the proxy's IP
+app.set('trust proxy', 1);
+
+// ==========================================
+// RATE LIMITERS
+// ==========================================
+
+// Strict limiter for the login endpoint: max 5 attempts per minute per IP
+const loginLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many login attempts. Please wait a minute before trying again.' },
+});
+
+// Moderate limiter for statement decryption (CPU-heavy endpoint)
+const statementLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many statement processing requests. Please slow down.' },
+});
 
 // Middleware
 const allowedOrigins = process.env.ORIGIN
@@ -41,7 +79,7 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json({ limit: '10mb' }));
 
 // DB Connection
-const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI;
+const mongoUri = process.env.MONGODB_URI;
 
 mongoose
   .connect(mongoUri)
@@ -131,7 +169,7 @@ function authMiddleware(req, res, next) {
 // ==========================================
 
 // Login with Master Passcode / PIN
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', loginLimiter, async (req, res) => {
   try {
     const { pin, passcode, password } = req.body;
     const providedPin = String(pin || passcode || password || '').trim();
@@ -140,10 +178,7 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(400).json({ message: 'Passcode is required.' });
     }
 
-    const isValidPin =
-      providedPin === String(ACCESS_PIN).trim() ||
-      providedPin === '6169' ||
-      providedPin === '2130';
+    const isValidPin = providedPin === ACCESS_PIN;
 
     if (!isValidPin) {
       return res.status(401).json({ message: 'Incorrect passcode. Access denied.' });
@@ -365,74 +400,132 @@ app.post('/api/transactions', authMiddleware, async (req, res) => {
   }
 });
 
-// Bulk Insert Transactions (Optimized for CSV statement imports)
+// ==========================================
+// SHARED: dedup + insert + balance update
+// ==========================================
+// Loads existing transactions for the account, drops candidates that match
+// one (using the frontend's isDuplicateTransaction heuristics ported to
+// statementCore), stamps a fingerprint, inserts, then updates the account
+// balance (closing balance if provided, else net incremental).
+async function ingestTransactions(items, { source = 'manual' } = {}) {
+  const { userId, accountId } = await getContext();
+
+  const existing = await transaction.find({ accountId }).lean();
+
+  const docs = [];
+  let netBalanceChange = 0;
+  let explicitClosingBalance = null;
+  let skippedDuplicates = 0;
+  const intraBatch = [];
+
+  for (const item of items) {
+    const parsedAmount = Number(item.amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) continue;
+
+    const isExp = Boolean(item.isExpense);
+    const parsedDate = parseServerDate(item.date);
+
+    const candidate = {
+      userId,
+      accountId,
+      title: item.title ? String(item.title).trim() : 'Transaction',
+      amount: parsedAmount,
+      isExpense: isExp,
+      category: item.category || 'Bills',
+      recipient: item.recipient ? String(item.recipient).trim() : '',
+      description: item.description ? String(item.description).trim() : '',
+      isOnline: Boolean(item.isOnline),
+      reviewed: Boolean(item.reviewed),
+      source: item.source || source,
+      balance: typeof item.balance === 'number' ? item.balance : undefined,
+      date: parsedDate,
+    };
+
+    // Dedup against DB + against other rows in this same batch
+    if (findDuplicateIn(candidate, existing) || findDuplicateIn(candidate, intraBatch)) {
+      skippedDuplicates++;
+      continue;
+    }
+    intraBatch.push(candidate);
+
+    candidate.fingerprint = fingerprintOf(candidate);
+    docs.push(candidate);
+
+    netBalanceChange += isExp ? -parsedAmount : parsedAmount;
+    if (typeof item.balance === 'number' && !isNaN(item.balance)) {
+      explicitClosingBalance = item.balance; // last one wins (latest row processed)
+    }
+    if (typeof item.closingBalance === 'number' && !isNaN(item.closingBalance)) {
+      explicitClosingBalance = item.closingBalance;
+    }
+  }
+
+  if (docs.length === 0) {
+    return { inserted: 0, skippedDuplicates, closingBalance: null };
+  }
+
+  // ordered:false + duplicate-key tolerance so a race can't abort the whole batch
+  let insertedDocs = [];
+  try {
+    insertedDocs = await transaction.insertMany(docs, { ordered: false });
+  } catch (err) {
+    if (err.code === 11000 && Array.isArray(err.insertedDocs)) {
+      insertedDocs = err.insertedDocs.filter(Boolean);
+    } else {
+      throw err;
+    }
+  }
+
+  if (explicitClosingBalance !== null) {
+    await accountInfo.findByIdAndUpdate(accountId, {
+      currentBalance: explicitClosingBalance,
+      lastSyncedAt: new Date(),
+    });
+  } else {
+    await accountInfo.findByIdAndUpdate(accountId, {
+      $inc: { currentBalance: netBalanceChange },
+      lastSyncedAt: new Date(),
+    });
+  }
+
+  return {
+    inserted: insertedDocs.length,
+    skippedDuplicates,
+    closingBalance: explicitClosingBalance,
+    transactions: insertedDocs,
+  };
+}
+
+// Bulk Insert Transactions (Optimized CSV statement imports)
 app.post('/api/transactions/bulk', authMiddleware, async (req, res) => {
   try {
-    const { userId, accountId } = await getContext();
     const items = Array.isArray(req.body) ? req.body : req.body.transactions;
 
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ message: 'A non-empty array of transactions is required.' });
     }
 
-    const docs = [];
-    let netBalanceChange = 0;
-    let explicitClosingBalance = (typeof req.body.closingBalance === 'number' && !isNaN(req.body.closingBalance))
-      ? req.body.closingBalance
-      : null;
+    const overrideClosing =
+      typeof req.body.closingBalance === 'number' && !isNaN(req.body.closingBalance)
+        ? req.body.closingBalance
+        : null;
 
-    for (const item of items) {
-      const parsedAmount = Number(item.amount);
-      if (isNaN(parsedAmount) || parsedAmount < 0) continue;
+    const result = await ingestTransactions(items, { source: req.body.source || 'csv-import' });
 
-      const isExp = Boolean(item.isExpense);
-      const parsedDate = parseServerDate(item.date);
-
-      docs.push({
-        userId,
-        accountId,
-        title: item.title ? String(item.title).trim() : 'Transaction',
-        amount: parsedAmount,
-        isExpense: isExp,
-        category: item.category || 'Bills',
-        recipient: item.recipient ? String(item.recipient).trim() : '',
-        description: item.description ? String(item.description).trim() : '',
-        isOnline: Boolean(item.isOnline),
-        reviewed: Boolean(item.reviewed),
-        balance: typeof item.balance === 'number' ? item.balance : undefined,
-        date: parsedDate,
-      });
-
-      netBalanceChange += isExp ? -parsedAmount : parsedAmount;
-
-      if (explicitClosingBalance === null && typeof item.balance === 'number' && !isNaN(item.balance)) {
-        explicitClosingBalance = item.balance;
-      }
-    }
-
-    if (docs.length === 0) {
-      return res.status(400).json({ message: 'No valid transactions found to insert.' });
-    }
-
-    const insertedDocs = await transaction.insertMany(docs);
-
-    // Update account balance
-    if (explicitClosingBalance !== null) {
+    // If the client explicitly sent a closing balance, trust it over per-row math
+    if (overrideClosing !== null) {
+      const { accountId } = await getContext();
       await accountInfo.findByIdAndUpdate(accountId, {
-        currentBalance: explicitClosingBalance,
-        lastSyncedAt: new Date(),
-      });
-    } else {
-      await accountInfo.findByIdAndUpdate(accountId, {
-        $inc: { currentBalance: netBalanceChange },
+        currentBalance: overrideClosing,
         lastSyncedAt: new Date(),
       });
     }
 
     res.status(201).json({
       success: true,
-      count: insertedDocs.length,
-      transactions: insertedDocs,
+      count: result.inserted,
+      skippedDuplicates: result.skippedDuplicates,
+      transactions: result.transactions,
     });
   } catch (err) {
     console.error('Bulk transaction error:', err);
@@ -563,8 +656,8 @@ function generatePasswordVariants(inputPwd) {
   return Array.from(variants).filter(Boolean);
 }
 
-// Decrypt & Parse Password-Protected Bank Statement (XLSX / XLS / Office) - Local utility endpoint
-app.post('/api/statement/decrypt-and-parse', async (req, res) => {
+// Decrypt & Parse Password-Protected Bank Statement (XLSX / XLS / Office) — protected & rate-limited
+app.post('/api/statement/decrypt-and-parse', authMiddleware, statementLimiter, async (req, res) => {
   try {
     const { fileBase64, password, fileName } = req.body;
     if (!fileBase64) {
@@ -696,4 +789,4 @@ app.listen(port, () => {
   console.log(`Backend server running on http://localhost:${port}`);
 });
 
-
+

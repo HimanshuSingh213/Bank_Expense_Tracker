@@ -54,6 +54,14 @@ const transactionSchema = new mongoose.Schema({
     balance: {
         type: Number
     },
+    fingerprint: {
+        type: String,
+        index: true
+    },
+    source: {
+        type: String,
+        default: 'manual'
+    },
     date: {
         type: mongoose.Schema.Types.Mixed,
         default: Date.now,

@@ -16,9 +16,9 @@ export function ExpenseProvider({ children }) {
   // Theme state (Permanent Dark Mode)
   const [theme] = useState('dark');
 
-  // Auth state
-  const [token, setToken] = useState(() => localStorage.getItem('expense_token') || '');
-  const [isAuthenticated, setIsAuthenticated] = useState(() => Boolean(localStorage.getItem('expense_token')));
+  // Auth state (token kept in sessionStorage — cleared when browser tab closes)
+  const [token, setToken] = useState(() => sessionStorage.getItem('expense_token') || '');
+  const [isAuthenticated, setIsAuthenticated] = useState(() => Boolean(sessionStorage.getItem('expense_token')));
   const [authChecking, setAuthChecking] = useState(true);
 
   // User and Account states
@@ -82,7 +82,7 @@ export function ExpenseProvider({ children }) {
   // Authenticated Fetch Helper
   const authFetch = useCallback(
     async (endpoint, options = {}) => {
-      const currentToken = token || localStorage.getItem('expense_token');
+      const currentToken = token || sessionStorage.getItem('expense_token');
       const headers = {
         'Content-Type': 'application/json',
         ...(currentToken ? { Authorization: `Bearer ${currentToken}` } : {}),
@@ -119,7 +119,7 @@ export function ExpenseProvider({ children }) {
         return { success: false, message: data.message || 'Login failed' };
       }
 
-      localStorage.setItem('expense_token', data.token);
+      sessionStorage.setItem('expense_token', data.token);
       setToken(data.token);
       setIsAuthenticated(true);
       if (data.user) setUser(data.user);
@@ -132,7 +132,7 @@ export function ExpenseProvider({ children }) {
   };
 
   const logout = () => {
-    localStorage.removeItem('expense_token');
+    sessionStorage.removeItem('expense_token');
     setToken('');
     setIsAuthenticated(false);
     setTransactions([]);
@@ -142,7 +142,7 @@ export function ExpenseProvider({ children }) {
   // Verify auth on mount
   useEffect(() => {
     async function verifyAuth() {
-      const savedToken = localStorage.getItem('expense_token');
+      const savedToken = sessionStorage.getItem('expense_token');
       if (!savedToken) {
         setIsAuthenticated(false);
         setAuthChecking(false);
@@ -473,8 +473,7 @@ export function ExpenseProvider({ children }) {
     }
   };
 
-  const updateAccountInfo = async (updates) => {
-    try {
+  const updateAccountInfo = async (updates) => {    try {
       setIsSyncing(true);
       const payload = typeof updates === 'object' ? updates : { bankName: updates };
       const res = await authFetch('/api/accounts/info', {

@@ -664,12 +664,15 @@ export async function parseFileStatement(file, bankPreset = 'sbi', password = ''
         let sheetData = null;
         let decryptionError = null;
 
-        // Step 1: Try local backend decryption & parsing engine
+        // Step 1: Try local backend decryption & parsing engine (auth-protected)
         try {
-          const resp = await fetch('http://localhost:8000/api/statement/decrypt-and-parse', {
+          const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+          const authToken = sessionStorage.getItem('expense_token');
+          const resp = await fetch(`${backendUrl}/api/statement/decrypt-and-parse`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
             },
             body: JSON.stringify({
               fileBase64: base64,
