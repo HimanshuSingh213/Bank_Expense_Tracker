@@ -1,0 +1,243 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────
+   SBI Expense Manager — design tokens
+   "Statement": true black, white ink, monospaced figures.
+   Colour exists only where it carries meaning — money in, money
+   out, a decision waiting. Interaction is white, never tinted.
+   No gradients, no glow, no soft shadows, no rounded cards.
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  color-scheme: dark;
+
+  /* Surfaces — true black for OLED; panels lift by value, not border */
+  --bg: #000000;
+  --bg-deep: #000000;
+  --surface: #060606;
+  --surface-2: #0d0d0d;
+  --surface-3: #161616;
+
+  /* Hairlines — structural rules only, never card outlines */
+  --line-soft: #141414;
+  --line: #242424;
+  --line-strong: #3a3a3a;
+  /* Interactive boundaries must clear 3:1 (WCAG 1.4.11) */
+  --line-control: #666666;
+
+  /* Ink — three values, wide apart so hierarchy is unmistakable */
+  --fg: #ffffff;
+  --fg-2: #cbcbc6;
+  --fg-3: #9d9d97;
+  --fg-inverse: #000000;
+
+  /* Money direction — saturated enough to read instantly on black */
+  --credit: #40d18d;
+  --credit-surface: rgba(64, 209, 141, 0.1);
+  --credit-border: rgba(64, 209, 141, 0.36);
+
+  --debit: #ff6f5e;
+  --debit-surface: rgba(255, 111, 94, 0.1);
+  --debit-border: rgba(255, 111, 94, 0.36);
+
+  --warning: #f5b841;
+  --warning-surface: rgba(245, 184, 65, 0.1);
+  --warning-border: rgba(245, 184, 65, 0.36);
+
+  --radius: 2px;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-deep: var(--bg-deep);
+
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+
+  --color-line-soft: var(--line-soft);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-line-control: var(--line-control);
+
+  --color-fg: var(--fg);
+  --color-fg-2: var(--fg-2);
+  --color-fg-3: var(--fg-3);
+  --color-fg-inverse: var(--fg-inverse);
+
+  --color-credit: var(--credit);
+  --color-credit-surface: var(--credit-surface);
+  --color-credit-border: var(--credit-border);
+
+  --color-debit: var(--debit);
+  --color-debit-surface: var(--debit-surface);
+  --color-debit-border: var(--debit-border);
+
+  --color-warning: var(--warning);
+  --color-warning-surface: var(--warning-surface);
+  --color-warning-border: var(--warning-border);
+
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-code);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-ui), ui-sans-serif, system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* One focus treatment, everywhere: white, 2px, offset. The ring
+     never fades in — it is either there or it is not. */
+  :focus-visible {
+    outline: 2px solid var(--fg);
+    outline-offset: 2px;
+    border-radius: var(--radius);
+    transition: none;
+  }
+
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: none;
+  }
+
+  /* Selection inverts. Nothing else on the page does. */
+  ::selection {
+    background: var(--fg);
+    color: var(--fg-inverse);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--bg);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #2e2e2e;
+    border: 3px solid var(--bg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer utilities {
+  /* Every figure in a column is monospaced, so it aligns by
+     construction rather than by padding guesswork. */
+  .figure {
+    font-family: var(--font-code), ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-variant-numeric: tabular-nums lining-nums;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+  }
+
+  /* A figure that stands alone is set in the sans, heavy and tight,
+     so it reads as one mass rather than as a row of characters. */
+  .amount {
+    font-family: var(--font-ui), ui-sans-serif, system-ui, sans-serif;
+    font-variant-numeric: tabular-nums lining-nums;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+  }
+
+  .tnum {
+    font-variant-numeric: tabular-nums lining-nums;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+  }
+
+  /* Statement-style eyebrow: mono, small, wide, quiet. */
+  .label {
+    font-family: var(--font-code), ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10.5px;
+    line-height: 1;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  /* A panel is a value shift on black. No border, no radius, no shadow. */
+  .panel {
+    background-color: var(--surface);
+  }
+
+  .rule {
+    height: 1px;
+    background-color: var(--line);
+  }
+
+  /* Checkbox: a white tick, not a browser default. */
+  .check {
+    appearance: none;
+    -webkit-appearance: none;
+    display: inline-grid;
+    place-content: center;
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    border: 1px solid var(--line-control);
+    border-radius: var(--radius);
+    background-color: var(--bg);
+    cursor: pointer;
+    transition:
+      background-color 100ms ease,
+      border-color 100ms ease;
+  }
+
+  .check:hover {
+    border-color: var(--fg-2);
+  }
+
+  .check:checked {
+    border-color: var(--fg);
+    background-color: var(--fg);
+  }
+
+  .check:checked::after {
+    content: "";
+    width: 8px;
+    height: 8px;
+    background-color: var(--fg-inverse);
+    clip-path: polygon(14% 44%, 0 65%, 40% 100%, 100% 16%, 84% 0, 39% 62%);
+  }
+
+  .check:focus-visible {
+    outline: 2px solid var(--fg);
+    outline-offset: 2px;
+  }
+}
