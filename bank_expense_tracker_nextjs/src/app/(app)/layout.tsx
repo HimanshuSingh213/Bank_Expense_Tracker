@@ -1,9 +1,8 @@
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/common/app-shell";
-import { getSession } from "@/lib/auth/session";
+import { getSession, getUserById } from "@/lib/auth";
 import { getPrimaryAccountDoc, last4 } from "@/lib/data/accounts";
-import { getUserById } from "@/lib/data/users";
 
 /**
  * The security boundary for every page in this group: no verified session, no

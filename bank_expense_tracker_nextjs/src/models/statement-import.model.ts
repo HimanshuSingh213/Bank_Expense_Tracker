@@ -13,6 +13,9 @@ export type ImportStatus = "draft" | "committed" | "failed" | "discarded";
 export type PreviewRowDoc = {
   rowNumber: number;
   raw: string[];
+  /** Party/title from the narration (extractPartyAndTitle rules). */
+  title: string;
+  recipient: string;
   txnDate: string | null;
   valueDate?: string | null;
   narration: string;
@@ -25,6 +28,11 @@ export type PreviewRowDoc = {
   issues: string[];
   selected: boolean;
   category?: string;
+  /** False when the category came from the keyword fallback, not a rule. */
+  categoryConfident?: boolean;
+  /** What the local AI tier would call this row instead, when it has an idea. */
+  aiCategory?: string | null;
+  aiConfidence?: number | null;
   dedupeKey?: string | null;
 };
 
@@ -66,6 +74,8 @@ const rowSchema = new Schema<PreviewRowDoc>(
   {
     rowNumber: { type: Number, required: true },
     raw: { type: [String], default: [] },
+    title: { type: String, default: "" },
+    recipient: { type: String, default: "" },
     txnDate: { type: String, default: null },
     valueDate: { type: String, default: null },
     narration: { type: String, default: "" },
@@ -82,6 +92,9 @@ const rowSchema = new Schema<PreviewRowDoc>(
     issues: { type: [String], default: [] },
     selected: { type: Boolean, default: true },
     category: { type: String, default: "Others" },
+    categoryConfident: { type: Boolean, default: true },
+    aiCategory: { type: String, default: null },
+    aiConfidence: { type: Number, default: null },
     dedupeKey: { type: String, default: null },
   },
   { _id: false },

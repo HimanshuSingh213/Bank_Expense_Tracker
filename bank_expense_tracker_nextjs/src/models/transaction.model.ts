@@ -30,7 +30,6 @@ export type TransactionDoc = {
   balance?: number | null;
   /** Informational only since the anchored ledger; not a uniqueness key. */
   fingerprint?: string | null;
-  source: "manual" | "statement-import";
   /** Legacy mixed date. New code reads `txnDate` and falls back to this. */
   date?: Date | string | null;
 
@@ -77,11 +76,6 @@ const transactionSchema = new Schema<TransactionDoc>(
     reviewedAt: { type: Date, default: null },
     balance: { type: Number, default: null },
     fingerprint: { type: String, default: null },
-    source: {
-      type: String,
-      enum: ["manual", "statement-import"],
-      default: "manual",
-    },
     date: { type: Schema.Types.Mixed, default: null },
 
     amountPaise: { type: Number, required: true },

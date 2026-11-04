@@ -7,7 +7,6 @@ export type ApiErrorCode =
   | "VALIDATION_ERROR"
   | "NOT_FOUND"
   | "CONFLICT"
-  | "RATE_LIMITED"
   | "PASSWORD_REQUIRED"
   | "INVALID_FILE_PASSWORD"
   | "UNSUPPORTED_FORMAT"
@@ -16,6 +15,8 @@ export type ApiErrorCode =
   | "TOO_MANY_ROWS"
   | "IMPORT_FAILED"
   | "IMPORT_EXPIRED"
+  | "IMPORT_STATE"
+  | "AI_UNAVAILABLE"
   | "UPSTREAM_ERROR"
   | "UNKNOWN";
 

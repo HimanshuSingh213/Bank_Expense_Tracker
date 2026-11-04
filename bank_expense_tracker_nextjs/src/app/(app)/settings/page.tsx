@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
+import { publicErrorMessage } from "@/lib/api";
+import { getSession, getUserById } from "@/lib/auth";
+import { currentBalancePaise, getPrimaryAccountDoc, last4 } from "@/lib/data/accounts";
 import { PageHeader } from "@/components/common/page-header";
 import { LogoutButton } from "@/components/common/logout-button";
 import { Badge } from "@/components/ui/badge";
@@ -8,14 +11,6 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { SettingsIcon } from "@/components/ui/icons";
 import { Panel, PanelHeader } from "@/components/ui/panel";
-import { getSession } from "@/lib/auth/session";
-import { publicErrorMessage } from "@/lib/errors";
-import {
-  currentBalancePaise,
-  getPrimaryAccountDoc,
-  last4,
-} from "@/lib/data/accounts";
-import { getUserById } from "@/lib/data/users";
 import { formatINR, formatStatementDate, splitINR } from "@/lib/utils";
 
 export const metadata: Metadata = {

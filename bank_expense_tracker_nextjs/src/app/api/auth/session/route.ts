@@ -1,6 +1,5 @@
 import { fail, ok } from "@/lib/api";
-import { getSession } from "@/lib/auth/session";
-import { getUserById } from "@/lib/data/users";
+import { getSession, getUserById } from "@/lib/auth";
 
 /** GET /api/auth/session — who the verified cookie belongs to. */
 export async function GET() {

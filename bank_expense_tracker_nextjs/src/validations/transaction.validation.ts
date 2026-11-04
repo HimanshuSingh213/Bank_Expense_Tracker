@@ -69,7 +69,20 @@ export const reviewTransactionSchema = z.object({
   reviewed: z.boolean(),
 });
 
+const bulkIds = z.array(z.string().min(1)).min(1).max(500);
+
+/**
+ * Body of POST /api/transactions/bulk — the multiselect delete in the table
+ * and the calculator's "mark reviewed" button. A discriminated union, so a
+ * review body must carry the new value and a delete body cannot sneak one in.
+ */
+export const bulkTransactionSchema = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("review"), ids: bulkIds, reviewed: z.boolean() }),
+  z.object({ action: z.literal("delete"), ids: bulkIds }),
+]);
+
 export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
 export type UpdateTransactionInput = z.infer<typeof updateTransactionSchema>;
 export type ReviewTransactionInput = z.infer<typeof reviewTransactionSchema>;
 export type EditTransactionFormInput = z.infer<typeof editTransactionFormSchema>;
+export type BulkTransactionInput = z.infer<typeof bulkTransactionSchema>;

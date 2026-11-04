@@ -1,11 +1,10 @@
-import type { Metadata } from "next";
+import { type Metadata } from "next";
 import { redirect } from "next/navigation";
+import { publicErrorMessage } from "@/lib/api";
+import { getSession, setupNeeded } from "@/lib/auth";
 import { LoginForm } from "@/components/auth/login-form";
 import { Wordmark } from "@/components/common/logo";
 import { ErrorState } from "@/components/ui/error-state";
-import { getSession } from "@/lib/auth/session";
-import { setupNeeded } from "@/lib/data/users";
-import { publicErrorMessage } from "@/lib/errors";
 
 export const metadata: Metadata = {
   title: "Sign in",

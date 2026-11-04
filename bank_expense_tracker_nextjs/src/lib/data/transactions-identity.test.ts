@@ -4,7 +4,7 @@ import {
   makeDedupeKey,
   makeFingerprint,
   normalizeReference,
-} from "@/lib/transactions/identity";
+} from "@/lib/data/transactions";
 
 const date = new Date(Date.UTC(2026, 9, 31));
 

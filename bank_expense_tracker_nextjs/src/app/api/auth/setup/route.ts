@@ -1,8 +1,5 @@
-import { clientIp, fail, isSameOrigin, ok } from "@/lib/api";
-import { hashPassword } from "@/lib/auth/password";
-import { rateLimit } from "@/lib/auth/rate-limit";
-import { startSession } from "@/lib/auth/session";
-import { completeSetup, SetupDoneError, SetupError } from "@/lib/data/users";
+import { fail, isSameOrigin, ok, publicErrorMessage } from "@/lib/api";
+import { completeSetup, hashPassword, startSession } from "@/lib/auth";
 import { setupApiSchema } from "@/validations/auth.validation";
 
 /**
@@ -14,19 +11,6 @@ import { setupApiSchema } from "@/validations/auth.validation";
 export async function POST(request: Request) {
   if (!isSameOrigin(request)) {
     return fail("FORBIDDEN", "This request did not come from the application.", 403);
-  }
-
-  const ip = clientIp(request);
-  // Strict on purpose: setup happens once, from one machine.
-  const perIp = rateLimit(`setup:ip:${ip}`, 5, 60 * 60 * 1000);
-
-  if (!perIp.allowed) {
-    return fail(
-      "RATE_LIMITED",
-      `Too many attempts. Try again in ${Math.ceil(perIp.retryAfterSeconds / 60)} minutes.`,
-      429,
-      { retryAfterSeconds: perIp.retryAfterSeconds },
-    );
   }
 
   const body = await request.json().catch(() => null);
@@ -51,9 +35,10 @@ export async function POST(request: Request) {
 
     return ok({ id: String(user._id), name: user.name, email: user.email });
   } catch (error) {
-    if (error instanceof SetupDoneError || error instanceof SetupError) {
-      return fail("CONFLICT", error.message, 409);
+    const message = error instanceof Error ? error.message : "Setup refused.";
+    if (message.includes("already exists")) {
+      return fail("CONFLICT", message, 409);
     }
-    throw error;
+    return fail("UNKNOWN", publicErrorMessage(error), 500);
   }
 }

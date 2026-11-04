@@ -1,6 +1,12 @@
-import type { Metadata } from "next";
+import { type Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { publicErrorMessage } from "@/lib/api";
+import { getSession } from "@/lib/auth";
+import { categoryTotals, totalsForRange } from "@/lib/data/transactions";
+import { addDays, fromISODate, istCalendarMonth } from "@/lib/dates";
+import { analyticsHref } from "@/lib/transactions/query";
+import { formatINR, formatStatementDate } from "@/lib/utils";
 import { PageHeader } from "@/components/common/page-header";
 import { buttonClass } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -9,12 +15,6 @@ import { Field, Input } from "@/components/ui/field";
 import { AnalyticsIcon } from "@/components/ui/icons";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { Table, Td, Th, Tr } from "@/components/ui/table";
-import { getSession } from "@/lib/auth/session";
-import { addDays, fromISODate, istCalendarMonth } from "@/lib/dates";
-import { publicErrorMessage } from "@/lib/errors";
-import { categoryTotals, totalsForRange } from "@/lib/data/transactions";
-import { analyticsHref } from "@/lib/transactions/query";
-import { formatINR, formatStatementDate } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Analytics",

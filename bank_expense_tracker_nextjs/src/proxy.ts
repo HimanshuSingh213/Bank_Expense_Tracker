@@ -1,10 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { SESSION_COOKIE } from "@/lib/auth/cookie";
+import { SESSION_COOKIE } from "@/lib/auth";
 
 /**
  * Edge-level convenience only: it checks that a session cookie is *present*.
- * It cannot verify the signature here, and it is not the security boundary —
- * every page and route re-verifies through `getSession()` / `requireSession()`.
+ * It cannot reach the database here, and it is not the security boundary —
+ * every page and route re-verifies the cookie through `getSession()`.
  */
 export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

@@ -1,5 +1,5 @@
 import { fail, isSameOrigin, ok } from "@/lib/api";
-import { endSession } from "@/lib/auth/session";
+import { endSession } from "@/lib/auth";
 
 /** POST /api/auth/logout — clears the cookie. */
 export async function POST(request: Request) {

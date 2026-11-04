@@ -16,6 +16,14 @@ export type UserDoc = {
    * this field, so nothing old breaks.
    */
   passwordHash?: string | null;
+  /**
+   * New, optional — the current login token (random hex). `startSession`
+   * writes it, `getSession` matches it, `endSession` clears it. There is no
+   * signing secret anywhere: possession of the token is the whole proof, so
+   * it only ever travels in one httpOnly cookie.
+   */
+  sessionToken?: string | null;
+  sessionExpiresAt?: Date | null;
   settings?: {
     locale?: string;
     dateFormat?: string;
@@ -31,6 +39,8 @@ const userSchema = new Schema<UserDoc>(
     provider: { type: String, default: "local", trim: true },
     // Additive: the bcrypt hash written by the one-time /setup flow.
     passwordHash: { type: String, default: null },
+    sessionToken: { type: String, default: null },
+    sessionExpiresAt: { type: Date, default: null },
     settings: {
       locale: { type: String, default: "en-IN" },
       dateFormat: { type: String, default: "dd MMM yyyy" },

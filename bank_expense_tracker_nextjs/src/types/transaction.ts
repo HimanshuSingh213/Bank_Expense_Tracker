@@ -27,14 +27,13 @@ export const CATEGORIES: TransactionCategory[] = [
   "Others",
 ];
 
-export type TransactionSource = "manual" | "statement-import";
-
 /** What the API and pages hand to the browser. Never a raw Mongoose document. */
 export type TransactionDto = {
   id: string;
   txnDate: string | null;
   valueDate: string | null;
   title: string;
+  recipient: string;
   narration: string;
   referenceNumber: string | null;
   category: TransactionCategory;
@@ -43,7 +42,6 @@ export type TransactionDto = {
   balanceAfterPaise: number | null;
   reviewed: boolean;
   reviewedAt: string | null;
-  source: TransactionSource;
   importId: string | null;
   importRowNumber: number | null;
 };
