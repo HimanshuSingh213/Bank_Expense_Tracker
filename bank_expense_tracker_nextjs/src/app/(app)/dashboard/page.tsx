@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import { type Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/common/page-header";
@@ -6,28 +6,20 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { Badge } from "@/components/ui/badge";
 import { buttonClass } from "@/components/ui/button";
-import {
-  AlertIcon,
-  CheckIcon,
-  ChevronRightIcon,
-  TransactionsIcon,
-} from "@/components/ui/icons";
 import { Panel, PanelHeader } from "@/components/ui/panel";
-import { TransactionsWorkspace } from "@/components/transactions/transactions-workspace";
-import { addDays, fromISODate, istCalendarMonth } from "@/lib/dates";
-import { publicErrorMessage } from "@/lib/errors";
-import { getSession } from "@/lib/auth/session";
-import {
-  currentBalancePaise,
-  getPrimaryAccountDoc,
-  last4,
-} from "@/lib/data/accounts";
+import { AlertIcon, CheckIcon, ChevronRightIcon, TransactionsIcon } from "@/components/ui/icons";
+import { publicErrorMessage } from "@/lib/api";
+import { getSession } from "@/lib/auth";
+import { addDays, fromISODate, toISODate, IST_OFFSET_MS } from "@/lib/dates";
+import { currentBalancePaise, getPrimaryAccountDoc, last4 } from "@/lib/data/accounts";
 import { latestImport } from "@/lib/data/imports";
 import {
   countUnreviewed,
+  latestStatementBalance,
   recentTransactions,
   totalsForRange,
 } from "@/lib/data/transactions";
+import { TransactionsWorkspace } from "@/components/transactions/transactions-workspace";
 import type { TransactionDto } from "@/types/transaction";
 import {
   formatINR,
@@ -43,8 +35,10 @@ type DashboardState =
   | {
       ok: true;
       account: { bankName: string; accountType: string; last4: string } | null;
+      /** The last balance the statement itself printed, and when. */
+      statementBalance: { balancePaise: number | null; asOf: string | null };
       anchorDate: string | null;
-      balancePaise: number;
+      anchorBalancePaise: number;
       recent: TransactionDto[];
       totals: { creditPaise: number; debitPaise: number; netPaise: number; count: number };
       unreviewed: number;
@@ -52,7 +46,27 @@ type DashboardState =
     }
   | { ok: false; reason: string };
 
-async function loadDashboard(userId: string, month: { from: string; to: string }): Promise<DashboardState> {
+/** Short month names for the two-month window label. */
+const SHORT_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** The last two IST months ending with the current one, as date strings. */
+function twoMonthWindow(now: Date): {
+  from: string;
+  to: string;
+  label: string;
+} {
+  const ist = new Date(now.getTime() + IST_OFFSET_MS);
+  const year = ist.getUTCFullYear();
+  const month = ist.getUTCMonth();
+
+  return {
+    from: toISODate(new Date(Date.UTC(year, month - 1, 1))),
+    to: toISODate(new Date(Date.UTC(year, month + 1, 0))),
+    label: `${SHORT_MONTHS[(month - 1 + 12) % 12]} – ${SHORT_MONTHS[month]} ${year}`,
+  };
+}
+
+async function loadDashboard(userId: string): Promise<DashboardState> {
   try {
     const account = await getPrimaryAccountDoc(userId);
 
@@ -61,8 +75,9 @@ async function loadDashboard(userId: string, month: { from: string; to: string }
       return {
         ok: true,
         account: null,
+        statementBalance: { balancePaise: null, asOf: null },
         anchorDate: null,
-        balancePaise: 0,
+        anchorBalancePaise: 0,
         recent: [],
         totals: { creditPaise: 0, debitPaise: 0, netPaise: 0, count: 0 },
         unreviewed: 0,
@@ -70,17 +85,19 @@ async function loadDashboard(userId: string, month: { from: string; to: string }
       };
     }
 
-    const monthFrom = fromISODate(month.from);
-    const monthTo = fromISODate(month.to);
+    const window = twoMonthWindow(new Date());
+    const windowFrom = fromISODate(window.from);
+    const windowTo = fromISODate(window.to);
 
-    const [balancePaise, recent, totals, unreviewed, lastImport] =
+    const [statementBalance, anchorBalancePaise, recent, totals, unreviewed, lastImport] =
       await Promise.all([
+        latestStatementBalance(userId, String(account._id)),
         currentBalancePaise(userId, account),
         recentTransactions(userId, 5),
         totalsForRange(
           userId,
-          monthFrom ?? new Date(),
-          monthTo ? addDays(monthTo, 1) : new Date(),
+          windowFrom ?? new Date(),
+          windowTo ? addDays(windowTo, 1) : new Date(),
         ),
         countUnreviewed(userId),
         latestImport(userId),
@@ -93,10 +110,16 @@ async function loadDashboard(userId: string, month: { from: string; to: string }
         accountType: account.accountType,
         last4: last4(account.accountNumber),
       },
+      statementBalance: {
+        balancePaise: statementBalance.balancePaise,
+        asOf: statementBalance.asOf
+          ? formatStatementDate(statementBalance.asOf)
+          : null,
+      },
       anchorDate: account.balanceAnchor?.asOfDate
         ? formatStatementDate(account.balanceAnchor.asOfDate)
         : null,
-      balancePaise,
+      anchorBalancePaise,
       recent,
       totals,
       unreviewed,
@@ -112,9 +135,8 @@ export default async function DashboardPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const month = istCalendarMonth(new Date());
-  const state = await loadDashboard(session.userId, month);
-
+  const window = twoMonthWindow(new Date());
+  const state = await loadDashboard(session.userId);
   if (!state.ok) {
     return (
       <>
@@ -130,18 +152,25 @@ export default async function DashboardPage() {
   const {
     account,
     anchorDate,
-    balancePaise,
+    anchorBalancePaise,
+    statementBalance,
     recent,
     totals,
     unreviewed,
     lastImport,
   } = state;
 
+  // The headline figure: the computed anchored-ledger balance — the same
+  // formula Settings uses. The statement's own printed balance is shown
+  // below as context, not as the headline.
+  const balancePaise = anchorBalancePaise;
+  const balanceAsOf = anchorDate;
+
   return (
     <>
       <PageHeader
         title="Overview"
-        meta={`${month.label} · State Bank of India${account ? ` ···${account.last4}` : ""}`}
+        meta={`${window.label} · State Bank of India${account ? ` ···${account.last4}` : ""}`}
         action={
           <Link
             href="/imports"
@@ -173,19 +202,21 @@ export default async function DashboardPage() {
 
             <p className="figure mt-5 text-[10.5px] tracking-[0.04em] text-fg-3 uppercase">
               {anchorDate
-                ? `Anchored balance · as of ${anchorDate}`
-                : "No anchor · computed from every recorded transaction"}
+                ? `Anchored ledger balance · as of ${anchorDate}`
+                : statementBalance.balancePaise !== null && balanceAsOf
+                  ? `Last statement balance · as of ${balanceAsOf}`
+                  : "No balances recorded yet"}
             </p>
 
             <div className="mt-9 grid gap-x-6 gap-y-3.5 border-t border-line pt-6 sm:grid-cols-3">
               <div className="flex items-baseline justify-between gap-3 sm:block">
-                <p className="label text-fg-3">In · {month.label}</p>
+                <p className="label text-fg-3">In · 2 months</p>
                 <p className="figure mt-0 text-[15px] whitespace-nowrap text-credit sm:mt-2.5">
                   +{formatINR(totals.creditPaise)}
                 </p>
               </div>
               <div className="flex items-baseline justify-between gap-3 sm:block">
-                <p className="label text-fg-3">Out · {month.label}</p>
+                <p className="label text-fg-3">Out · 2 months</p>
                 <p className="figure text-[15px] whitespace-nowrap text-debit sm:mt-2.5">
                   −{formatINR(totals.debitPaise)}
                 </p>
@@ -201,7 +232,7 @@ export default async function DashboardPage() {
 
           <div className="lg:col-span-5">
             <div className="border-b border-line px-5 py-5 sm:px-6">
-              <span className="label text-fg-3">{month.label}</span>
+              <span className="label text-fg-3">{window.label}</span>
 
               <dl className="mt-5 space-y-3.5">
                 <div className="flex items-baseline justify-between gap-4">

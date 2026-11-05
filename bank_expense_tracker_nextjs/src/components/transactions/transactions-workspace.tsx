@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { TransactionCalculator, type CalculatorEntry, type CalculatorWindows } from "@/components/transactions/transaction-calculator";
 import { TransactionTable } from "@/components/transactions/transaction-table";
@@ -11,11 +12,15 @@ import type { TransactionDto } from "@/types/transaction";
  * Owns the calculator as a Map in spirit — a plain object where every key is
  * a window title and its value is the rows added there:
  *
- *   { "Car EMIs": [...], "Trip budget": [...] }
+ *   { "Car EMIs": [...], "Trip budget": [...]. }
  *
- * The object lives in localStorage, so a reload keeps every window. Nothing
- * from the calculator touches the database — it is a scratchpad, the ledger
- * itself stays the authoritative record on the server.
+ * The object lives in localStorage, so a reload keeps every window — rows
+ * included. Nothing from the calculator touches the database — it is a
+ * scratchpad, the ledger itself stays the authoritative record on the server.
+ *
+ * This component also owns the optimistic ledger state: every review/delet-
+ * ion, single or bulk, starts here so the table below flips instantly and
+ * the calculator's reviewed counts agree with it.
  */
 
 const STORAGE_KEY = "calculator-windows-v1";
@@ -51,7 +56,45 @@ function toEntry(item: TransactionDto): CalculatorEntry {
   };
 }
 
-export function TransactionsWorkspace({ items }: { items: TransactionDto[] }) {
+/** Same shape as the table used to hold — extended with the bulk actions. */
+type LedgerChange =
+  | { type: "review"; id: string; reviewed: boolean }
+  | { type: "delete"; id: string }
+  | { type: "reviewMany"; ids: string[]; reviewed: boolean }
+  | { type: "deleteMany"; ids: string[] };
+
+function applyChange(items: TransactionDto[], change: LedgerChange) {
+  if (change.type === "delete") {
+    return items.filter((item) => item.id !== change.id);
+  }
+  if (change.type === "deleteMany") {
+    const gone = new Set(change.ids);
+    return items.filter((item) => !gone.has(item.id));
+  }
+  if (change.type === "reviewMany") {
+    const ids = new Set(change.ids);
+    return items.map((item) =>
+      ids.has(item.id) ? { ...item, reviewed: change.reviewed } : item,
+    );
+  }
+  return items.map((item) =>
+    item.id === change.id ? { ...item, reviewed: change.reviewed } : item,
+  );
+}
+
+async function postBulk(body: { action: "review" | "delete"; ids: string[]; reviewed?: boolean }) {
+  return fetch("/api/transactions/bulk", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export function TransactionsWorkspace({ items: serverItems }: { items: TransactionDto[] }) {
+  const router = useRouter();
+  const [, startTransition] = useTransition();
+
+  const [items, setOptimistic] = useOptimistic(serverItems, applyChange);
   const [windows, setWindows] = useState<CalculatorWindows>({});
   const [activeTitle, setActiveTitle] = useState<string | null>(null);
 
@@ -76,6 +119,12 @@ export function TransactionsWorkspace({ items }: { items: TransactionDto[] }) {
     Object.values(kept)
       .flat()
       .map((entry) => entry.id),
+  );
+
+  // Which ledger rows are reviewed right now — the calculator reads this so
+  // its per-window button only counts rows that still need the tick.
+  const reviewedIds = new Set(
+    items.filter((item) => item.reviewed).map((item) => item.id),
   );
 
   const titleList = Object.keys(kept);
@@ -140,8 +189,119 @@ export function TransactionsWorkspace({ items }: { items: TransactionDto[] }) {
     toast.info(`Window "${title}" closed.`);
   }
 
+  // ---------------------------------------------------------------------------
+  // Ledger mutations — optimistic first, server behind it, refresh to settle.
+  // ---------------------------------------------------------------------------
+
+  function toggleReviewed(item: TransactionDto) {
+    startTransition(async () => {
+      setOptimistic({ type: "review", id: item.id, reviewed: !item.reviewed });
+
+      try {
+        const response = await fetch(`/api/transactions/${item.id}`, {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ reviewed: !item.reviewed }),
+        });
+
+        if (!response.ok) {
+          toast.error("The row was not marked. Refreshing…");
+        } else {
+          toast.success(!item.reviewed ? "Marked as reviewed." : "Back to unreviewed.");
+        }
+      } catch {
+        toast.error("The server could not be reached. Refreshing…");
+      }
+
+      // Fresh data from the server wins over anything optimistic.
+      router.refresh();
+    });
+  }
+
+  function deleteRow(item: TransactionDto) {
+    startTransition(async () => {
+      setOptimistic({ type: "delete", id: item.id });
+
+      try {
+        const response = await fetch(`/api/transactions/${item.id}`, {
+          method: "DELETE",
+        });
+
+        if (!response.ok) {
+          toast.error("The row was not deleted. Refreshing…");
+        } else {
+          toast.success("Row deleted. It can be recovered from the database.");
+        }
+      } catch {
+        toast.error("The server could not be reached. Refreshing…");
+      }
+
+      router.refresh();
+    });
+  }
+
+  /**
+   * Shared engine for both bulk actions — the table's multiselect delete
+   * and the calculator window's "mark reviewed". The ids come from the
+   * rows the user can actually see, so a stale id would still mean a row
+   * they own.
+   */
+  function sendBulk(action: "review" | "delete", ids: string[], reviewed?: boolean) {
+    if (!ids.length) return;
+
+    startTransition(async () => {
+      setOptimistic(
+        action === "review"
+          ? { type: "reviewMany", ids, reviewed: reviewed === true }
+          : { type: "deleteMany", ids },
+      );
+
+      const noun = `${ids.length} row${ids.length === 1 ? "" : "s"}`;
+
+      try {
+        const response = await postBulk({ action, ids, reviewed });
+
+        if (!response.ok) {
+          toast.error(`The ${action} failed for ${noun}. Refreshing…`);
+        } else {
+          const data = (await response.json().catch(() => null)) as
+            | { data?: { modified?: number } }
+            | null;
+          const moved = data?.data?.modified ?? ids.length;
+
+          toast.success(
+            action === "review"
+              ? `${moved} row${moved === 1 ? "" : "s"} marked reviewed.`
+              : `${moved} row${moved === 1 ? "" : "s"} deleted. Recoverable from the database.`,
+          );
+        }
+      } catch {
+        toast.error("The server could not be reached. Refreshing…");
+      }
+
+      router.refresh();
+    });
+  }
+
+  /** Calculator window button: unreviewed rows in the window get the tick. */
+  function markWindowReviewed(title: string) {
+    const entries = kept[title] ?? [];
+    const unreviewed = entries.filter((entry) => !reviewedIds.has(entry.id));
+
+    if (!unreviewed.length) {
+      toast.info(`"${title}" — every row is already reviewed.`);
+      return;
+    }
+
+    sendBulk(
+      "review",
+      unreviewed.map((entry) => entry.id),
+      true,
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-6 xl:flex-row xl:items-start">
+    <div className="flex flex-col gap-6">
       <div className="min-w-0 flex-1">
         <TransactionTable
           items={items}
@@ -163,18 +323,24 @@ export function TransactionsWorkspace({ items }: { items: TransactionDto[] }) {
 
             toggleEntry(target, toEntry(item));
           }}
+          onToggleReviewed={toggleReviewed}
+          onDelete={deleteRow}
+          onDeleteMany={(ids) => sendBulk("delete", ids)}
         />
       </div>
 
-      <div className="xl:sticky xl:top-8 xl:w-[300px] shrink-0">
+      {/* Calculator — full width, below the ledger */}
+      <div className="w-full">
         <TransactionCalculator
           windows={kept}
           activeTitle={activeTitle}
+          reviewedIds={reviewedIds}
           onActivate={setActiveTitle}
           onCreate={createWindow}
           onToggleEntry={toggleEntry}
           onClearWindow={clearWindow}
           onCloseWindow={closeWindow}
+          onMarkWindowReviewed={markWindowReviewed}
         />
       </div>
     </div>

@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useOptimistic, useState, useTransition } from "react";
-import { toast } from "sonner";
+import { useState } from "react";
 import { TransactionDetailModal } from "@/components/transactions/transaction-detail-modal";
 import { TransactionEditForm } from "@/components/transactions/transaction-edit-form";
 import { CategoryBadge } from "@/components/transactions/category-badge";
@@ -25,116 +23,133 @@ import {
 import type { TransactionDto } from "@/types/transaction";
 
 /**
- * The ledger table, now interactive.
+ * The ledger table, interactive in three ways.
  *
  * - Click a row → detail modal (the full record page still exists via a link
  *   inside the modal).
- * - Check button → reviewed    - these two flip instantly on screen with
- * - Trash button → delete        useOptimistic, before the server answers.
- *
- * If the server refuses a change, the toast explains and `router.refresh()`
- * pulls the real rows back, so there is no fake state left behind.
+ * - Check button → reviewed, trash button → delete — both flip instantly
+ *   because the parent keeps the optimistic state; these buttons just call it.
+ * - Tick boxes → select rows, then delete them all in one confirmed write.
+ *   Selection lives only on this page — it never writes until confirmed.
  */
 
-type RowChange =
-  | { type: "review"; id: string; reviewed: boolean }
-  | { type: "delete"; id: string };
-
-function applyChange(
-  items: TransactionDto[],
-  change: RowChange,
-): TransactionDto[] {
-  if (change.type === "delete") {
-    return items.filter((item) => item.id !== change.id);
-  }
-  return items.map((item) =>
-    item.id === change.id ? { ...item, reviewed: change.reviewed } : item,
-  );
-}
-
 export function TransactionTable({
-  items: serverItems,
+  items,
   calculatorIds,
   onToggleCalculator,
+  onToggleReviewed,
+  onDelete,
+  onDeleteMany,
 }: {
   items: TransactionDto[];
   /** Rows already sitting in the calculator (disabled-tick state). */
   calculatorIds: string[];
   /** Parent owns the calculator rows; the toggle both adds and removes. */
   onToggleCalculator: (item: TransactionDto) => void;
+  /** Optimistic mutations, implemented by the workspace above. */
+  onToggleReviewed: (item: TransactionDto) => void;
+  onDelete: (item: TransactionDto) => void;
+  onDeleteMany: (ids: string[]) => void;
 }) {
-  const router = useRouter();
-  const [, startTransition] = useTransition();
-
-  const [items, setOptimistic] = useOptimistic(
-    serverItems,
-    (current, change: RowChange) => applyChange(current, change),
-  );
-
   const [openItem, setOpenItem] = useState<TransactionDto | null>(null);
   const [openEdit, setOpenEdit] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmDeleteMany, setConfirmDeleteMany] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  function toggleReviewed(item: TransactionDto) {
-    startTransition(async () => {
-      setOptimistic({
-        type: "review",
-        id: item.id,
-        reviewed: !item.reviewed,
-      });
+  const selectedSet = new Set(selectedIds);
+  const allSelected = items.length > 0 && selectedIds.length === items.length;
 
-      try {
-        const response = await fetch(`/api/transactions/${item.id}`, {
-          method: "PATCH",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ reviewed: !item.reviewed }),
-        });
-
-        if (!response.ok) {
-          toast.error("The row was not marked. Refreshing…");
-        } else {
-          toast.success(!item.reviewed ? "Marked as reviewed." : "Back to unreviewed.");
-        }
-      } catch {
-        toast.error("The server could not be reached. Refreshing…");
-      }
-
-      // Fresh data from the server wins over anything optimistic.
-      router.refresh();
-    });
+  function toggleOne(id: string) {
+    setSelectedIds((current) =>
+      current.includes(id)
+        ? current.filter((row) => row !== id)
+        : [...current, id],
+    );
   }
 
-  function deleteRow(item: TransactionDto) {
-    setConfirmDeleteId(null);
-    setOpenItem(null); // the modal belongs to a row that is going away
-    startTransition(async () => {
-      setOptimistic({ type: "delete", id: item.id });
+  /** Tick every row on the page, or untick everything. */
+  function toggleAll() {
+    setSelectedIds(allSelected ? [] : items.map((item) => item.id));
+  }
 
-      try {
-        const response = await fetch(`/api/transactions/${item.id}`, {
-          method: "DELETE",
-        });
-
-        if (!response.ok) {
-          toast.error("The row was not deleted. Refreshing…");
-        } else {
-          toast.success("Row deleted. It can be recovered from the database.");
-        }
-      } catch {
-        toast.error("The server could not be reached. Refreshing…");
-      }
-
-      router.refresh();
-    });
+  function deleteSelected() {
+    setConfirmDeleteMany(false);
+    setSelectedIds([]);
+    onDeleteMany(selectedIds.length ? selectedIds : items.map((item) => item.id));
   }
 
   return (
-    <>
+    <div className="flex flex-col gap-4">
+      {/* Bulk bar — appears only while rows are ticked. */}
+      {selectedIds.length ? (
+        <div className="flex flex-wrap items-center gap-4 border border-line-control px-4 py-2.5">
+          <span className="label text-fg-3">
+            {selectedIds.length} selected
+          </span>
+
+          {confirmDeleteMany ? (
+            <>
+              <button
+                type="button"
+                onClick={deleteSelected}
+                className="border border-debit bg-debit px-3 py-1.5 font-mono text-[10.5px] tracking-[0.06em] text-bg uppercase focus-visible:outline"
+              >
+                Yes, delete {selectedIds.length}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmDeleteMany(false)}
+                className="border border-line-control px-3 py-1.5 font-mono text-[10.5px] tracking-[0.06em] text-fg-3 uppercase hover:border-fg hover:text-fg focus-visible:outline"
+              >
+                Keep
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmDeleteMany(true)}
+              className="inline-flex items-center gap-1.5 border border-debit-border px-3 py-1.5 font-mono text-[10.5px] tracking-[0.06em] text-debit uppercase hover:border-debit focus-visible:outline"
+            >
+              <TrashIcon className="h-3.5 w-3.5" />
+              Delete
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedIds([]);
+              setConfirmDeleteMany(false);
+            }}
+            className="font-mono text-[10.5px] tracking-[0.06em] text-fg-3 uppercase hover:text-fg focus-visible:outline"
+          >
+            Clear selection
+          </button>
+        </div>
+      ) : null}
+
       <Table>
         <thead>
           <tr>
+            <Th className="w-[36px]">
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={allSelected}
+                title={allSelected ? "Untick all" : "Tick every row"}
+                onClick={toggleAll}
+                className={
+                  allSelected
+                    ? "grid h-4 w-4 place-items-center rounded-[2px] bg-fg text-bg focus-visible:outline"
+                    : "grid h-4 w-4 place-items-center rounded-[2px] border border-line-control text-fg hover:border-fg focus-visible:outline"
+                }
+              >
+                {allSelected ? <CheckIcon className="h-2.5 w-2.5" /> : null}
+              </button>
+            </Th>
             <Th className="hidden w-[112px] sm:table-cell">Date</Th>
-            <Th>Narration</Th>
+            <Th>Party</Th>
             <Th className="hidden w-[124px] md:table-cell">Category</Th>
             <Th className="hidden w-[118px] sm:table-cell">Type</Th>
             <Th className="w-[128px] text-right">Amount</Th>
@@ -147,9 +162,32 @@ export function TransactionTable({
             const date = parseDate(item.txnDate);
             const credit = item.direction === "credit";
             const inCalculator = calculatorIds.includes(item.id);
+            const chosen = selectedSet.has(item.id);
+            // Who this row was with — sender on a credit, recipient on a
+            // debit. The full narration stays out of the table; it lives in
+            // the detail modal.
+            const party =
+              item.recipient || item.title || item.narration || "—";
 
             return (
               <Tr key={item.id}>
+                <Td className="w-[36px]">
+                  <button
+                    type="button"
+                    role="checkbox"
+                    aria-checked={chosen}
+                    title={chosen ? "Remove from selection" : "Select this row"}
+                    onClick={() => toggleOne(item.id)}
+                    className={
+                      chosen
+                        ? "grid h-4 w-4 place-items-center rounded-[2px] bg-fg text-bg focus-visible:outline"
+                        : "grid h-4 w-4 place-items-center rounded-[2px] border border-line-control text-fg hover:border-fg focus-visible:outline"
+                    }
+                  >
+                    {chosen ? <CheckIcon className="h-2.5 w-2.5" /> : null}
+                  </button>
+                </Td>
+
                 <Td className="figure hidden whitespace-nowrap text-fg-3 sm:table-cell">
                   {date ? formatStatementDate(date) : "—"}
                 </Td>
@@ -164,8 +202,8 @@ export function TransactionTable({
                     }}
                     className="block max-w-full cursor-pointer text-left"
                   >
-                    <span className="line-clamp-2 text-fg hover:underline hover:underline-offset-2">
-                      {item.narration || item.title}
+                    <span className="line-clamp-1 text-fg hover:underline hover:underline-offset-2">
+                      {party}
                     </span>
                   </button>
                   <span className="figure mt-1 block truncate text-[10.5px] text-fg-3">
@@ -222,7 +260,7 @@ export function TransactionTable({
                       type="button"
                       title={item.reviewed ? "Unreview" : "Mark reviewed"}
                       aria-pressed={item.reviewed}
-                      onClick={() => toggleReviewed(item)}
+                      onClick={() => onToggleReviewed(item)}
                       className={
                         item.reviewed
                           ? "group rounded-[2px] p-1.5 bg-fg text-bg focus-visible:outline"
@@ -257,7 +295,10 @@ export function TransactionTable({
                         <button
                           type="button"
                           title="Yes, delete this row"
-                          onClick={() => deleteRow(item)}
+                          onClick={() => {
+                            setConfirmDeleteId(null);
+                            onDelete(item);
+                          }}
                           className="group rounded-[2px] bg-debit text-bg p-1.5 focus-visible:outline"
                         >
                           <CheckIcon className="h-3.5 w-3.5" />
@@ -324,7 +365,11 @@ export function TransactionTable({
             {confirmDeleteId === openItem.id ? (
               <button
                 type="button"
-                onClick={() => deleteRow(openItem)}
+                onClick={() => {
+                  setConfirmDeleteId(null);
+                  setOpenItem(null); // the modal belongs to a row that is going away
+                  onDelete(openItem);
+                }}
                 className="justify-self-start border border-debit bg-debit px-3 py-2 font-mono text-[10.5px] tracking-[0.06em] text-bg uppercase focus-visible:outline sm:justify-self-end"
               >
                 Confirm delete
@@ -354,6 +399,6 @@ export function TransactionTable({
           ) : null}
         </TransactionDetailModal>
       ) : null}
-    </>
+    </div>
   );
 }

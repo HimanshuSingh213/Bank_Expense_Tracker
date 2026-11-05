@@ -1,15 +1,15 @@
-import type { Metadata } from "next";
+import { type Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import type { ReactNode } from "react";
+import { publicErrorMessage } from "@/lib/api";
+import { getSession } from "@/lib/auth";
+import { getTransaction } from "@/lib/data/transactions";
 import { PageHeader } from "@/components/common/page-header";
 import { Badge } from "@/components/ui/badge";
 import { buttonClass } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
 import { Panel, PanelHeader } from "@/components/ui/panel";
-import { getSession } from "@/lib/auth/session";
-import { publicErrorMessage } from "@/lib/errors";
-import { getTransaction } from "@/lib/data/transactions";
 import type { TransactionDto } from "@/types/transaction";
 import { formatINR, formatStatementDate, parseDate } from "@/lib/utils";
 
@@ -116,11 +116,6 @@ export default async function TransactionDetailPage(props: {
                 {transaction.balanceAfterPaise === null
                   ? "—"
                   : formatINR(transaction.balanceAfterPaise)}
-              </DetailRow>
-              <DetailRow label="Source">
-                {transaction.source === "statement-import"
-                  ? "Statement import"
-                  : "Manual entry"}
               </DetailRow>
               <DetailRow label="Import row">
                 {transaction.importRowNumber === null
