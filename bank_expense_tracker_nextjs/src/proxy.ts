@@ -8,14 +8,14 @@ import { SESSION_COOKIE } from "@/lib/auth";
  */
 export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const hasCookie = request.cookies.has(SESSION_COOKIE);
 
-  if (pathname === "/login" || pathname === "/setup") {
-    return hasCookie
-      ? NextResponse.redirect(new URL("/dashboard", request.url))
-      : NextResponse.next();
+  // Never redirect away from login or setup at proxy level —
+  // those pages check real database session validity via getSession().
+  if (pathname.startsWith("/login") || pathname.startsWith("/setup")) {
+    return NextResponse.next();
   }
 
+  const hasCookie = request.cookies.has(SESSION_COOKIE);
   if (hasCookie) return NextResponse.next();
 
   const login = new URL("/login", request.url);

@@ -25,14 +25,38 @@ export function fail(
  * this closes the rest.
  */
 export function isSameOrigin(request: Request): boolean {
-  const expected = process.env.APP_URL;
-  if (!expected) return false;
+  const host =
+    request.headers.get("x-forwarded-host") ??
+    request.headers.get("host") ??
+    new URL(request.url).host;
 
   const origin = request.headers.get("origin");
-  if (origin) return sameOriginValue(origin, expected);
+  if (origin) {
+    try {
+      if (new URL(origin).host === host) return true;
+    } catch {
+      // invalid URL
+    }
+  }
 
   const referer = request.headers.get("referer");
-  if (referer) return sameOriginValue(referer, expected);
+  if (referer) {
+    try {
+      if (new URL(referer).host === host) return true;
+    } catch {
+      // invalid URL
+    }
+  }
+
+  const expected = process.env.APP_URL;
+  if (expected) {
+    if (origin && sameOriginValue(origin, expected)) return true;
+    if (referer && sameOriginValue(referer, expected)) return true;
+  }
+
+  if (!origin && !referer) {
+    return true;
+  }
 
   return false;
 }
