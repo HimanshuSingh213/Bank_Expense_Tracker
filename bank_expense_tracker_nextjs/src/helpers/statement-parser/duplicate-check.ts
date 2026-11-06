@@ -1,4 +1,4 @@
-import { extractReference } from "@/lib/transactions/identity";
+import { extractReference } from "@/lib/data/transactions";
 
 /**
  * Duplicate detection, ported one RULE for one RULE from the legacy code:

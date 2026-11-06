@@ -1,38 +1,21 @@
-import { Types } from "mongoose";
-import { clientIp, fail, isSameOrigin, ok } from "@/lib/api";
-import { getSession } from "@/lib/auth/session";
-import { rateLimit } from "@/lib/auth/rate-limit";
+import { fail, isSameOrigin, ok, publicErrorMessage } from "@/lib/api";
+import { getSession } from "@/lib/auth";
 import { getPrimaryAccountDoc } from "@/lib/data/accounts";
+import { buildPreviewRows } from "@/lib/data/imports";
 import { parseTableRows } from "@/helpers/statement-parser/table-parser";
 import { readStatementWorkbook } from "@/helpers/statement-parser/workbook-reader";
-import { buildPreviewRows } from "@/lib/data/imports.parse";
-import { createImportDraft, ImportError } from "@/lib/data/imports.write";
-import { publicErrorMessage } from "@/lib/errors";
 
 /**
  * POST /api/imports — the "analyze" step.
  *
  * Excel only (the user's decision): .xls / .xlsx up to 8 MB, optional
  * statement password. The file is parsed on the server with the ported
- * legacy parser; nothing touches `transactions` here — only the draft.
+ * legacy parser; nothing is saved to DB here — drafts remain in-memory
+ * on the client until confirm.
  */
 
 const MAX_BYTES = 8 * 1024 * 1024;
 const ALLOWED = new Set(["xls", "xlsx"]);
-
-/** The draft shape the browser gets — no Mongo internals. */
-function draftToJson(draft: Awaited<ReturnType<typeof createImportDraft>>["draft"]) {
-  return {
-    id: String(draft._id),
-    fileName: draft.originalFileName,
-    detectedFormat: draft.detectedFormat,
-    periodFrom: draft.statementPeriod?.from?.toISOString() ?? null,
-    periodTo: draft.statementPeriod?.to?.toISOString() ?? null,
-    closingBalancePaise: draft.statementClosingBalancePaise,
-    totals: draft.totals,
-    rows: draft.rows,
-  };
-}
 
 export async function POST(request: Request) {
   const session = await getSession();
@@ -40,11 +23,6 @@ export async function POST(request: Request) {
 
   if (!isSameOrigin(request)) {
     return fail("FORBIDDEN", "This request did not come from the application.", 403);
-  }
-
-  const limit = rateLimit(`import:${clientIp(request)}`, 10, 60_000);
-  if (!limit.allowed) {
-    return fail("RATE_LIMITED", "Too many analyses. Wait a moment.", 429);
   }
 
   let form: FormData;
@@ -72,7 +50,9 @@ export async function POST(request: Request) {
     return fail("FILE_TOO_LARGE", "The file is larger than 8 MB.", 400);
   }
 
-  const password = String(form.get("password") ?? "").trim();
+  const userPassword = String(form.get("password") ?? "").trim();
+  const envPassword = (process.env.STATEMENT_PASSWORD ?? "").trim();
+  const password = userPassword || envPassword;
   const account = await getPrimaryAccountDoc(session.userId);
   if (!account) {
     return fail("NOT_FOUND", "No account is linked to this ledger yet.", 404);
@@ -101,29 +81,33 @@ export async function POST(request: Request) {
       parsed.transactions,
     );
 
-    const { draft } = await createImportDraft(
-      session.userId,
-      new Types.ObjectId(String(account._id)),
-      {
-        fileName: rawFile.name,
-        fileSize: rawFile.size,
-        buffer,
-        detectedFormat: `${detectedFormatParts.join(" / ")}`,
-      },
-      {
-        transactions: parsed.transactions,
-        previewRows: rows,
-        closingBalancePaise: parsed.closingBalancePaise,
-      },
-    );
+    const periodFrom = parsed.transactions.at(0)?.date?.toISOString() ?? null;
+    const periodTo = parsed.transactions.at(-1)?.date?.toISOString() ?? null;
 
-    return ok({ draft: draftToJson(draft), counts });
+    const draft = {
+      id: "preview",
+      fileName: rawFile.name,
+      fileSize: rawFile.size,
+      detectedFormat: detectedFormatParts.join(" / "),
+      periodFrom,
+      periodTo,
+      closingBalancePaise: parsed.closingBalancePaise,
+      totals: {
+        parsed: rows.length,
+        valid: rows.filter((r) => r.verdict !== "invalid").length,
+        invalid: rows.filter((r) => r.verdict === "invalid").length,
+        new: rows.filter((r) => r.verdict === "new").length,
+        possibleDuplicate: rows.filter(
+          (r) => r.verdict === "duplicate" || r.verdict === "possible",
+        ).length,
+        selected: rows.filter((r) => r.selected).length,
+      },
+      rows,
+    };
+
+    return ok({ draft, counts });
   } catch (error) {
     console.error("Import analyze failed:", error);
-
-    if (error instanceof ImportError) {
-      return fail("IMPORT_FAILED", error.message, 400);
-    }
 
     const message = error instanceof Error ? error.message : String(error);
     const passwordRequired =
@@ -139,6 +123,13 @@ export async function POST(request: Request) {
     }
 
     if (/incorrect password/i.test(message)) {
+      if (!userPassword) {
+        return fail(
+          "INVALID_FILE_PASSWORD",
+          "Password required to unlock this bank statement.",
+          401,
+        );
+      }
       return fail(
         "INVALID_FILE_PASSWORD",
         "Incorrect password. The statement could not be decrypted with this password.",

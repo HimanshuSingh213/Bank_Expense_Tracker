@@ -1,36 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SBI Expense Manager (Next.js Rebuild)
 
-## Getting Started
+A clean, maintainable Next.js + TypeScript ledger rebuilt specifically for **State Bank of India (SBI)** statements.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Key Principles & Architecture
+
+### 1. Authoritative Integer Paise
+- All monetary arithmetic is performed in integer paise (`amountPaise`). Floating-point arithmetic on money is forbidden.
+- Legacy fields (`amount`, `isExpense`, `date`, `balance`) are kept strictly synchronized for backward compatibility with existing MongoDB databases.
+
+### 2. Anchored Ledger Balance
+- Balances are not stored as static truths that can drift out of sync.
+- The account document carries a `balanceAnchor` (`balancePaise`, `asOfDate`, `source`, `note`).
+- **Current Balance** is dynamically calculated on read: `anchorPaise + sum(signedPaise after asOfDate)`.
+- Upon statement import confirmation, the anchor is refreshed from the statement's ending balance (`source: "statement"`), never regressing to an older date.
+
+### 3. In-Memory Preview & Zero-Footprint Import Pipeline
+- **Analyze** (`POST /api/imports`): Parses `.xls` / `.xlsx` files entirely in memory on the server. Decrypts with optional passwords, cleans narrations, flags duplicates against existing ledger entries, and returns a preview directly to client state.
+- **No DB footprint for drafts**: Drafts are never written to MongoDB. The user can discard a preview at any time with zero database pollution.
+- **Confirm** (`POST /api/imports/confirm`): Rows reach the ledger only when explicitly confirmed.
+- **Import History**: A record in `statementimports` is created **only if at least 1 row was actually imported** (`inserted >= 1`). If 0 rows are inserted, no history record is created.
+
+### 4. Categorization Engine
+- **Deterministic Rules**: High-confidence keyword matching in `src/helpers/statement-parser/table-parser.ts` handles common Indian banking narrations (UPI, Swiggy, Zomato, PVR/INOX, salaries, ATM cash withdrawals, bill payments).
+- **Tier 1 Offline Embeddings**: Unclassified narrations use `@huggingface/transformers` (`all-MiniLM-L6-v2` 8-bit quantized embeddings) compared against category centroids in ~2ms per row with zero cloud API dependencies.
+- Tier 2 external LLM/Ollama calls were removed to avoid hallucinations and maintain sub-second preview performance.
+
+### 5. Streamlined Auth & Scoping
+- Single auth file (`src/lib/auth.ts`) utilizing bcrypt and secure HTTP-only cookies containing `<userId>.<sessionToken>`.
+- Every database read and write is strictly owner-scoped by the verified `userId`.
+
+---
+
+## Statement Import Data Flow
+
+```text
+Excel Statement (.xls / .xlsx)
+  │
+  ▼
+POST /api/imports (Analyze)
+  ├── workbook-reader: Decrypt workbook with password variants
+  ├── table-parser: Sniff headers, extract dates, paise amounts, party/reference info
+  ├── duplicate-check: Detect duplicates against DB and intra-file twin rows
+  └── ai.suggestCategories: Tier 1 embeddings suggest unconfident categories
+  │
+  ▼
+In-Memory Preview UI (Client State)
+  ├── Review parsed rows, amounts, running balances, and duplicate reasons
+  ├── Toggle row inclusion/exclusion
+  ├── Apply AI category suggestions
+  └── Discard preview at any time (Zero DB footprint)
+  │
+  ▼
+POST /api/imports/confirm (Confirm)
+  ├── Transaction.insertMany(ordered: false)
+  ├── refreshAnchorFromRows: Updates account balance anchor
+  └── StatementImport.create: Saved ONLY if inserted >= 1
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deployment on Vercel
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 1. Root Directory Setting
+Because the repository root contains the legacy application alongside the Next.js rebuild, configure the **Root Directory** in your Vercel Project Settings:
+```text
+bank_expense_tracker_nextjs
+```
 
-## Learn More
+### 2. Environment Variables
+Configure the following in the Vercel Dashboard (**Project Settings → Environment Variables**):
 
-To learn more about Next.js, take a look at the following resources:
+| Variable | Description | Example / Default |
+|---|---|---|
+| `MONGODB_URI` | MongoDB connection string (Atlas or self-hosted) | `mongodb+srv://...` |
+| `STATEMENT_PASSWORD` | (Optional) Default fallback password for encrypted SBI statements | `01011990` |
+| `AI_CATEGORY_SUGGESTIONS` | Set to `off` to disable `@huggingface/transformers` and rely 100% on deterministic keyword parser | `on` (or `off`) |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+> **Vercel Serverless Recommendation**: If you experience cold-start overhead or serverless function bundle limits with `@huggingface/transformers`, set `AI_CATEGORY_SUGGESTIONS=off`. The application will instantly fall back to the deterministic keyword parser with zero overhead.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## Verification Gates
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Before submitting changes, all four quality gates must pass cleanly:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+# 1. TypeScript type checking
+npx tsc --noEmit
+
+# 2. ESLint
+npm run lint
+
+# 3. Unit and integration test suite
+npx vitest run
+
+# 4. Next.js production build
+npm run build
+```

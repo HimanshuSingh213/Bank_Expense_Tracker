@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
@@ -19,7 +19,7 @@ import { formatINR } from "@/lib/utils";
  * reason named), or skipped. "Import N rows" is the only action that writes.
  */
 
-type PreviewRow = {
+export type PreviewRow = {
   rowNumber: number;
   narration: string;
   txnDate: string | null;
@@ -27,11 +27,13 @@ type PreviewRow = {
   amountPaise: number | null;
   balanceAfterPaise: number | null;
   category?: string;
+  categoryConfident?: boolean;
+  aiCategory?: string | null;
+  aiConfidence?: number | null;
   verdict: "new" | "duplicate" | "possible" | "invalid";
   reason?: string | null;
   selected: boolean;
 };
-
 type Draft = {
   id: string;
   fileName: string;
@@ -55,20 +57,99 @@ const VERDICT_WORDS: Record<PreviewRow["verdict"], { label: string; tone: "credi
   invalid: { label: "SKIPPED", tone: "neutral" },
 };
 
-export function ImportUploader({ accountLabel }: { accountLabel: string | null }) {
+export function ImportUploader({
+  accountLabel,
+  initialDraft,
+  initialRows,
+}: {
+  accountLabel: string | null;
+  initialDraft: Draft | null;
+  initialRows: PreviewRow[];
+}) {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [file, setFile] = useState<File | null>(null);
   const [password, setPassword] = useState("");
   const [needsPassword, setNeedsPassword] = useState(false);
   const [blockingError, setBlockingError] = useState<string | null>(null);
 
-  const [draft, setDraft] = useState<Draft | null>(null);
-  const [rows, setRows] = useState<PreviewRow[]>([]);
-  const [counters, setCounters] = useState<{ new: number; duplicate: number } | null>(null);
+  const [draft, setDraft] = useState<Draft | null>(initialDraft ?? null);
+  const [rows, setRows] = useState<PreviewRow[]>(initialRows ?? []);
 
   const [analyzing, setAnalyzing] = useState(false);
   const [confirming, setConfirming] = useState(false);
+
+  /** Discards preview completely with zero database footprint. */
+  function discardPreview() {
+    setDraft(null);
+    setRows([]);
+    setFile(null);
+    setPassword("");
+    setBlockingError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    toast.info("Preview discarded.");
+  }
+
+  /**
+   * Turns an AI suggestion into the row's category in client state.
+   */
+  function applySuggestion(row: PreviewRow) {
+    if (!row.aiCategory) return;
+
+    setRows((prev) =>
+      prev.map((item) =>
+        item.rowNumber === row.rowNumber
+          ? { ...item, category: row.aiCategory ?? item.category, aiCategory: null, aiConfidence: null }
+          : item,
+      ),
+    );
+    toast.success(`Category set to ${row.aiCategory}.`);
+  }
+
+  /** Apply every AI suggestion at once in client state. */
+  function applyAll() {
+    let applied = 0;
+    setRows((prev) =>
+      prev.map((item) => {
+        if (
+          item.verdict === "new" &&
+          item.aiCategory &&
+          item.aiCategory !== item.category
+        ) {
+          applied++;
+          return { ...item, category: item.aiCategory, aiCategory: null, aiConfidence: null };
+        }
+        return item;
+      }),
+    );
+
+    toast.success(
+      applied
+        ? `${applied} suggestion${applied === 1 ? "" : "s"} applied.`
+        : "Nothing to apply — every suggestion is already the row's category.",
+    );
+  }
+
+  /** The one-click re-tick: include a duplicate on purpose, or drop it back. */
+  function toggleRowSelected(row: PreviewRow) {
+    const nextSelected = !row.selected;
+    setRows((prev) =>
+      prev.map((item) =>
+        item.rowNumber === row.rowNumber
+          ? { ...item, selected: nextSelected }
+          : item,
+      ),
+    );
+
+    toast.info(
+      nextSelected
+        ? "Row included in the import."
+        : "Row will be skipped (can be re-included).",
+    );
+  }
 
   async function analyze() {
     if (!file) {
@@ -90,34 +171,43 @@ export function ImportUploader({ accountLabel }: { accountLabel: string | null }
       });
 
       const parsed = await response.json().catch(() => null);
+      const data = parsed?.data ?? parsed;
 
       if (!response.ok) {
-        if (parsed?.code === "INVALID_FILE_PASSWORD") {
+        if (data?.code === "INVALID_FILE_PASSWORD") {
           setNeedsPassword(true);
         }
-        setBlockingError(parsed?.error ?? "The statement could not be analyzed.");
-        toast.error(parsed?.error ?? "The statement could not be analyzed.");
+        setBlockingError(data?.error ?? "The statement could not be analyzed.");
+        toast.error(data?.error ?? "The statement could not be analyzed.");
         return;
       }
 
-      const rows = parsed.draft?.rows ?? [];
-      const newCount = rows.filter((row: PreviewRow) => row.verdict === "new").length;
-      const duplicateCount = rows.filter(
-        (row: PreviewRow) => row.verdict === "duplicate" || row.verdict === "possible",
+      const draftData = data?.draft;
+      if (!draftData || !Array.isArray(draftData.rows)) {
+        setBlockingError("The server returned an empty response. Try again.");
+        toast.error("The server returned an empty response. Try again.");
+        return;
+      }
+
+      const parsedRows: PreviewRow[] = draftData.rows ?? [];
+      const newCount = parsedRows.filter((row) => row.verdict === "new").length;
+      const duplicateCount = parsedRows.filter(
+        (row) => row.verdict === "duplicate" || row.verdict === "possible",
       ).length;
 
       setDraft({
-        id: parsed.draft.id,
-        fileName: parsed.draft.fileName,
-        periodFrom: parsed.draft.periodFrom,
-        periodTo: parsed.draft.periodTo,
-        closingBalancePaise: parsed.draft.closingBalancePaise,
-        totals: parsed.draft.totals,
+        id: draftData.id || "preview",
+        fileName: draftData.fileName,
+        periodFrom: draftData.periodFrom,
+        periodTo: draftData.periodTo,
+        closingBalancePaise: draftData.closingBalancePaise,
+        totals: draftData.totals,
       });
-      setRows(rows);
-      setCounters({ new: newCount, duplicate: duplicateCount });
+      setRows(parsedRows);
       toast.success(
-        `${newCount} new row${newCount === 1 ? "" : "s"} parsed — check the preview, then confirm.`,
+        `${newCount} new row${newCount === 1 ? "" : "s"} parsed${
+          duplicateCount ? ` · ${duplicateCount} duplicate${duplicateCount === 1 ? "" : "s"} flagged` : ""
+        } — check the preview, then confirm.`,
       );
     } catch {
       const reason = "The server could not be reached. Try again.";
@@ -134,35 +224,64 @@ export function ImportUploader({ accountLabel }: { accountLabel: string | null }
     setConfirming(true);
 
     try {
-      const response = await fetch(`/api/imports/${draft.id}/confirm`, {
+      const response = await fetch("/api/imports/confirm", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: draft.fileName,
+          periodFrom: draft.periodFrom,
+          periodTo: draft.periodTo,
+          closingBalancePaise: draft.closingBalancePaise,
+          rows,
+        }),
       });
 
-      const body = await response.json().catch(() => null);
+      const parsed = await response.json().catch(() => null);
+      const data = parsed?.data ?? parsed;
 
       if (!response.ok) {
-        toast.error(body?.error ?? "The import could not be completed.");
+        toast.error(data?.error ?? "The import could not be completed.");
         return;
       }
 
       toast.success(
-        `${body.inserted} row${body.inserted === 1 ? "" : "s"} imported into the ledger.`,
+        `${data.inserted} row${data.inserted === 1 ? "" : "s"} imported into the ledger.`,
       );
+
+      // Wait for the server to re-render (history table + dashboard totals)
+      // before wiping the client draft state, so the next Analyze request
+      // never hits a mid-refresh server.
+      await router.refresh();
 
       setDraft(null);
       setRows([]);
-      setCounters(null);
       setFile(null);
       setPassword("");
-      router.refresh(); // the history table + the dashboard totals
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     } catch {
-      toast.error("The server could not be reached. Try again.");
+      toast.error("The import could not be completed. Try again.");
     } finally {
       setConfirming(false);
     }
   }
 
-  const importableCount = counters?.new ?? 0;
+  /** Rows that will actually be written — mirrors the confirm filter. */
+  const importableCount = rows.filter(
+    (row) =>
+      row.selected && row.verdict !== "invalid" && (row.amountPaise ?? 0) > 0,
+  ).length;
+
+  const suggestedCount = rows.filter(
+    (row) => row.verdict === "new" && row.aiCategory && row.aiCategory !== row.category,
+  ).length;
+
+  const skippedDuplicateCount = rows.filter(
+    (row) =>
+      (row.verdict === "duplicate" || row.verdict === "possible") &&
+      !row.selected,
+  ).length;
 
   return (
     <div className="flex flex-col gap-6">
@@ -179,13 +298,22 @@ export function ImportUploader({ accountLabel }: { accountLabel: string | null }
               htmlFor="import-file"
               hint=".xls or .xlsx, exported from YONO / OnlineSBI. Up to 8 MB."
             >
-              <Input
-                id="import-file"
-                type="file"
-                accept=".xls,.xlsx"
-                className="h-9 w-full"
-                onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-              />
+              <div className="relative flex h-9 w-full items-center rounded-[2px] border border-line-control bg-surface-2 px-3 text-[13px] text-fg transition-[background-color,border-color,color] hover:border-fg-2 focus-within:border-fg">
+                <span className="mr-3 inline-flex shrink-0 select-none items-center justify-center rounded-[2px] border border-line-control bg-surface-elevated px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-[0.04em] text-fg">
+                  Choose File
+                </span>
+                <span className="truncate font-mono text-[11.5px] text-fg-3">
+                  {file ? file.name : "No file chosen"}
+                </span>
+                <input
+                  ref={fileInputRef}
+                  id="import-file"
+                  type="file"
+                  accept=".xls,.xlsx"
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                  onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+                />
+              </div>
             </Field>
 
             <Field
@@ -228,10 +356,20 @@ export function ImportUploader({ accountLabel }: { accountLabel: string | null }
             ) : null}
 
             {draft ? (
+              <Button
+                variant="secondary"
+                onClick={discardPreview}
+                disabled={confirming || analyzing}
+              >
+                Discard preview
+              </Button>
+            ) : null}
+
+            {draft ? (
               <span className="figure font-mono text-[10.5px] tracking-[0.06em] text-fg-3 uppercase">
-                {counters?.duplicate
-                  ? `${counters.duplicate} duplicate${counters.duplicate === 1 ? "" : "s"} will be skipped`
-                  : "no duplicates found"}
+                {skippedDuplicateCount
+                  ? `${skippedDuplicateCount} duplicate${skippedDuplicateCount === 1 ? "" : "s"} will be skipped`
+                  : "no duplicates skipped"}
               </span>
             ) : null}
           </div>
@@ -248,9 +386,20 @@ export function ImportUploader({ accountLabel }: { accountLabel: string | null }
         <Panel>
           <PanelHeader
             title="Preview"
-            meta={`${draft.fileName} · ${importableCount} NEW · ${counters?.duplicate ?? 0} DUPLICATE${
-              (counters?.duplicate ?? 0) === 1 ? "" : "S"
+            meta={`${draft.fileName} · ${importableCount} TO IMPORT${
+              skippedDuplicateCount ? ` · ${skippedDuplicateCount} DUPLICATE${skippedDuplicateCount === 1 ? "" : "S"} SKIPPED` : ""
             }`}
+            action={
+              suggestedCount > 0 ? (
+                <button
+                  type="button"
+                  onClick={applyAll}
+                  className="border border-line-control px-3 py-1.5 font-mono text-[10.5px] tracking-[0.06em] text-fg-3 uppercase hover:border-fg hover:text-fg focus-visible:outline disabled:opacity-50 disabled:hover:border-line-control disabled:hover:text-fg-3"
+                >
+                  Apply all {suggestedCount}
+                </button>
+              ) : null
+            }
           />
 
           <div className="max-h-[560px] overflow-y-auto">
@@ -269,7 +418,10 @@ export function ImportUploader({ accountLabel }: { accountLabel: string | null }
                 {rows.map((row) => {
                   const credit = row.direction === "credit";
                   const verdict = VERDICT_WORDS[row.verdict];
-                  const hidden = row.verdict === "duplicate" || row.verdict === "invalid";
+                  const hidden =
+                    row.verdict === "invalid" ||
+                    ((row.verdict === "duplicate" || row.verdict === "possible") &&
+                      !row.selected);
 
                   return (
                     <Tr key={row.rowNumber}>
@@ -288,6 +440,22 @@ export function ImportUploader({ accountLabel }: { accountLabel: string | null }
 
                       <Td className="hidden md:table-cell">
                         {row.category ? <CategoryBadge category={row.category} /> : "—"}
+                        {row.aiCategory && row.aiCategory !== row.category ? (
+                          <span className="mt-1 flex items-center gap-2">
+                            <span className="figure text-[10.5px] text-warning">
+                              AI: {row.aiCategory}
+                              {typeof row.aiConfidence === "number" ? " ·" +
+                                String(Math.round(row.aiConfidence * 100)) + "%" : ""}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => applySuggestion(row)}
+                              className="rounded-[2px] border border-warning px-1.5 py-0.5 figure text-[9.5px] uppercase tracking-[0.06em] text-warning hover:bg-[#f5b8411a] focus-visible:outline"
+                            >
+                              Apply
+                            </button>
+                          </span>
+                        ) : null}
                       </Td>
 
                       <Td className="figure text-right whitespace-nowrap">
@@ -307,6 +475,24 @@ export function ImportUploader({ accountLabel }: { accountLabel: string | null }
                         <Badge tone={verdict.tone} dot>
                           {verdict.label}
                         </Badge>
+
+                        {/* The one-click re-tick: include a duplicate on purpose,
+                            or skip a suspicious row before the confirm. */}
+                        {row.verdict !== "invalid" ? (
+                          <button
+                            type="button"
+                            onClick={() => toggleRowSelected(row)}
+                            className="mt-1.5 figure text-[9.5px] tracking-[0.06em] text-fg-3 uppercase hover:text-fg focus-visible:outline"
+                          >
+                            {row.selected
+                              ? row.verdict === "new"
+                                ? "Skip"
+                                : "Exclude"
+                              : row.verdict === "new"
+                                ? "Stop skipping"
+                                : "Include"}
+                          </button>
+                        ) : null}
                       </Td>
                     </Tr>
                   );

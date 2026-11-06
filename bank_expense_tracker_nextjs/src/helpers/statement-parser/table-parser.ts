@@ -1,5 +1,4 @@
 import { toPaise } from "@/lib/money";
-
 /**
  * The statement table parser, ported from the legacy application:
  *   My Bank Expense Tracker/frontend/src/utils/statementParser.js
@@ -19,6 +18,8 @@ export type ParsedTransaction = {
   title: string;
   recipient: string;
   category: string;
+  /** False when the category came from the keyword-rule fallback. */
+  categoryConfident: boolean;
   isExpense: boolean;
   amountPaise: number;
   balanceAfterPaise: number | null;
@@ -78,6 +79,7 @@ const CATEGORY_RULES: Array<{ category: string; keywords: string[] }> = [
       "apple store", "d-mart", "dmart", "smart bazaar", "spencer",
       "supermarket", "retail", "clothing", "apparel", "fashion", "footwear",
       "opticals", "lenskart", "electronics", "shopping", "mall", "bazaar",
+      "pvr", "inox", "cinepolis", "bookmyshow", "cinema", "theatre", "movie",
     ],
   },
   {
@@ -101,21 +103,60 @@ const CATEGORY_RULES: Array<{ category: string; keywords: string[] }> = [
       "dividend", "interest credit", "fd interest",
     ],
   },
+  {
+    category: "Salary",
+    keywords: [
+      "salary", "sal credit", "payroll", "monthly salary", "stipend",
+    ],
+  },
+  {
+    category: "Cash",
+    keywords: [
+      "atm wdl", "atm cash", "cash wdl", "cash dep", "nfs atm", "sbi atm",
+      "cdm wdl", "cash withdrawal",
+    ],
+  },
+  {
+    category: "Fees & Charges",
+    keywords: [
+      "sms chg", "sms charges", "annual fee", "debit card fee", "gst",
+      "penalty", "bank charges", "min bal chg",
+    ],
+  },
+  {
+    category: "Interest",
+    keywords: [
+      "int.pd", "interest credit", "credit interest", "savings bank int",
+      "sb interest", "fd interest credit",
+    ],
+  },
 ];
 
 export function categorizeTransaction(
   partyName = "",
   description = "",
 ): string {
+  return categorizeWithConfidence(partyName, description).category;
+}
+
+/**
+ * The same legacy rules, plus an honesty flag: `confident: false` means the
+ * row landed on the "Bills" fallback because no keyword matched. Those are
+ * exactly the rows the AI tier may suggest a better category for.
+ */
+export function categorizeWithConfidence(
+  partyName = "",
+  description = "",
+): { category: string; confident: boolean } {
   const combined = `${partyName} ${description}`.toLowerCase();
 
   for (const rule of CATEGORY_RULES) {
     if (rule.keywords.some((keyword) => combined.includes(keyword))) {
-      return rule.category;
+      return { category: rule.category, confident: true };
     }
   }
 
-  return "Bills";
+  return { category: "Bills", confident: false };
 }
 
 export function toTitleCase(text = ""): string {
@@ -406,7 +447,7 @@ function closingBalanceFromSummaryRow(
  * The core port: find the header row, map the columns, then read every data
  * row, skipping every footer the banks love to append.
  */
-export function parseTableRows(rows: unknown[]): TableParseResult {
+export function parseTableRows(rows: unknown[][]): TableParseResult {
   if (!Array.isArray(rows) || rows.length === 0) {
     return {
       transactions: [],
@@ -630,7 +671,7 @@ export function parseTableRows(rows: unknown[]): TableParseResult {
     if (Number.isNaN(amountPaise) || amountPaise <= 0) continue;
 
     const { title, recipient } = extractPartyAndTitle(descVal);
-    const category = categorizeTransaction(title, descVal);
+    const { category, confident } = categorizeWithConfidence(title, descVal);
 
     const runningBal =
       balanceCol !== -1 && cellText(row[balanceCol])
@@ -649,6 +690,7 @@ export function parseTableRows(rows: unknown[]): TableParseResult {
       title,
       recipient,
       category,
+      categoryConfident: confident,
       isExpense,
       amountPaise,
       balanceAfterPaise: runningBal,

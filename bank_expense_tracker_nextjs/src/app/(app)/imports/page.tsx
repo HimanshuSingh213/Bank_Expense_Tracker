@@ -1,5 +1,9 @@
-import type { Metadata } from "next";
+import { type Metadata } from "next";
 import { redirect } from "next/navigation";
+import { publicErrorMessage } from "@/lib/api";
+import { getSession } from "@/lib/auth";
+import { getPrimaryAccountDoc, last4 } from "@/lib/data/accounts";
+import { listImports } from "@/lib/data/imports";
 import { ImportUploader } from "@/components/imports/import-uploader";
 import { PageHeader } from "@/components/common/page-header";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
@@ -8,10 +12,6 @@ import { ErrorState } from "@/components/ui/error-state";
 import { ImportIcon } from "@/components/ui/icons";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { Table, Td, Th, Tr } from "@/components/ui/table";
-import { getSession } from "@/lib/auth/session";
-import { publicErrorMessage } from "@/lib/errors";
-import { getPrimaryAccountDoc, last4 } from "@/lib/data/accounts";
-import { listImports } from "@/lib/data/imports";
 import type { ImportStatus } from "@/types/import";
 import { formatStatementDate, parseDate } from "@/lib/utils";
 
@@ -80,15 +80,19 @@ export default async function ImportsPage() {
 
   const { imports } = state;
 
-    return (
-      <>
-        <PageHeader
-          title="Imports"
-          meta={`${imports.length} statement${imports.length === 1 ? "" : "s"} recorded`}
-          description="Analyse an Excel statement, read the preview, then confirm. Rows only reach the ledger after the preview; duplicates are named, never guessed."
-        />
+  return (
+    <>
+      <PageHeader
+        title="Imports"
+        meta={`${imports.length} statement${imports.length === 1 ? "" : "s"} recorded`}
+        description="Analyse an Excel statement, read the preview, then confirm. Rows only reach the ledger after the preview; duplicates are named, never guessed."
+      />
 
-        <ImportUploader accountLabel={accountLabel} />
+      <ImportUploader
+        accountLabel={accountLabel}
+        initialDraft={null}
+        initialRows={[]}
+      />
 
         <div className="mt-6">
         <Panel>
